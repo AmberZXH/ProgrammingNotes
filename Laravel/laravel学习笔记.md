@@ -244,15 +244,13 @@ Route::get('URI','闭包或控制器相应方法标识')<font color=red>->name('
 
 Laravel控制器放在在<u>app/http/controllers/</u>文件夹中。
 
-## 控制器文件如何命名和创建 ##
-
-### 命名规范 ###
+## 控制器命名规范 ##
 
 Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注意命名空间个基类控制器的引入
 
-### 如何创建控制器 ###
+## 控制器创建 ##
 
-#### 一般控制器的创建 ####
+### 一般控制器的创建 ###
 
 **php artisan make:controller 控制器名Controller**
 
@@ -272,7 +270,7 @@ Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注�
 		    //
 		}
 
-#### 资源控制器的创建 ####
+### 资源控制器的创建 ###
 
 **php artisan make:controller 控制器名Controller -r或者--resource**
 
@@ -313,7 +311,7 @@ Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注�
 	    }
 	}
 
-#### 分目录下创建控制器 ####
+### 分目录下创建控制器 ###
 
 **php artisan make:controller 目录名/控制器名Controller -r或者--resource**
 	
@@ -410,7 +408,7 @@ Laravel框架为我们提供了多种获取数据的形式，常用的形式有�
 	
 	class LoginController extends Controller
 	{
-	    // 登录处理 依赖注入方式来获取
+	    // 登录处理 依赖注入方式获取数据
 	    public function login(Request $request)
 	    {
 	        //获取指定字段
@@ -434,5 +432,59 @@ Laravel框架为我们提供了多种获取数据的形式，常用的形式有�
 	    }
 	
 	}
+
+$request类还可以获取cookie 和文件上传，当用到Route::match() 就一定会用到 $request 中的  isMethod 方法,对请求类型进行判断：
+
+在路由中定义路由
+
+	Route::match(['get','psot'], 'login', 'LoginController@login');
+
+
+控制器中进行判断
+
+	//判断请求类型
+    if($request->isMethod('post')){
+        return '这是post请求';
+    }
+
+## 辅助函数 request() 获取数据 ##
+
+request()返回的就是 Request 类对象，控制器中用辅助函数request()获取数据：
+	
+	<?php
+	
+	namespace App\Http\Controllers;
+	
+	use Illuminate\Http\Request;
+	
+	class LoginController extends Controller
+	{    
+	
+	    // 登录处理 辅助函数request()获取数据
+	    public function login2()
+	    {
+	        //获取指定字段
+	
+	        //获取全部
+	        dump(request()->all());
+	
+	        //获取指定字段 白名单
+	        dump(request()->only(['username','password']));
+	
+	        //排除不要的字段 黑名单
+	        dump(request()->except(['username']));
+	
+	        //判断一个字段是否存在
+	        dump(request()->has('sex'));  //返回 true/false
+	
+	        //判断请求类型
+	        dump(request()->isMethod('post'));
+	    }
+	
+	}
+
+# 响应 #
+
+
 
 	
