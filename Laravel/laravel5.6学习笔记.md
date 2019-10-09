@@ -31,7 +31,7 @@ Laravel框架主要目录及作用如下图所示
 
 ![web.php](https://raw.githubusercontent.com/CayangPro/my_notes/master/Laravel/img/csrf-2.JPG) 
 
-## 排除指定路由中不进行csrf验证 ##
+## 排除指定路由中不进行CSRF验证 ##
 
 并不是所有请求都需要避免CSRF攻击，比如去第三方的API获取数据的请求。
 
@@ -84,7 +84,7 @@ api项目路由位置： 项目目录<u>/routes/api.php</u>
 	    return '这是POST请求';
 	});
 	
-5.在服务器更新资源 ---> Route::put/puth($rui, $callback);
+5.在服务器更新资源 ---> Route::put/patch($rui, $callback);
 
 	Route::put('/user', function () {
 	    return '这是PUT请求';
@@ -246,7 +246,7 @@ Laravel控制器放在在<u>app/http/controllers/</u>文件夹中。
 
 ## 控制器命名规范 ##
 
-Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注意命名空间个基类控制器的引入
+Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注意命名空间和基类控制器的引入
 
 ## 控制器创建 ##
 
@@ -316,7 +316,7 @@ Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注�
 **php artisan make:controller 目录名/控制器名Controller -r或者--resource**
 	
 	//命令
-	> php.exe F:\wamp\www\web\Laravel\weblaravel\artisan make:controller Admin/userController
+	> php.exe F:\wamp\www\web\Laravel\weblaravel\artisan make:controller Admin/UserController
 	Controller created successfully.
 
 	//执行结果
@@ -326,7 +326,7 @@ Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注�
 	use Illuminate\Http\Request;
 	use App\Http\Controllers\Controller;
 	
-	class userController extends Controller
+	class UserController extends Controller
 	{
 	    //
 	}
@@ -351,7 +351,7 @@ Laravel控制器采用<font color=red>大驼峰命名规范</font>，同时注�
 
 Laravel框架为我们提供了多种获取数据的形式，常用的形式有如下两种。
 
-## input类来获取数据 ##
+## Input类来获取数据 ##
 
 通过接受用户输入的类：<u>Illuminate\Support\Facades\Input</u>来进行数据获取：
 
@@ -361,7 +361,7 @@ Laravel框架为我们提供了多种获取数据的形式，常用的形式有�
 4. Input::except([]); 获取指定几个用户的输入以外的所有参数（黑名单）
 5. Input::has('名称'); 判断某个输入的参数是否存在
 
-<font color=red>**以上方法既可以后去get中的信息，也可以获取post中的信息** </font>
+<font color=red>**以上方法既可以获取get中的信息，也可以获取post中的信息，使用时注意Input类的导入：use Illuminate\Support\Facades\Input;** </font>
 
 	<?php
 
@@ -483,8 +483,333 @@ request()返回的就是 Request 类对象，控制器中用辅助函数request(
 	
 	}
 
+
 # 响应 #
 
 
+当服务器收到浏览器的请求后，会发送响应消息给浏览器。
 
+## 返回字符串 ##
+
+在控制器或路由中 echo 或 return 一个字符串就可以了。 
+
+## 设置cookie ##
+
+Laravel框架为了安全，它的cookie是加密的。注意response()中必须有内容，没有也要填一个空字符串，如：response('')
+
+	// 设置 cookie 
+	return response('')->cookie('id',111,10.'/');
+	// 读取 cookie
+	echo request->cookie('id');
+
+## 重定向 ##
+
+根据路由的别名，跳转到指定的位置：
+
+	retrn redirect()->route('user.center');
+	//另一种写法
+	return redirect(route(''user.center'));
+
+	//带参数
+	return redirect()->route('user.cneter',['id'=>1]);
+	return redirect(route(''user.center',['id'=>1]));
+
+## Json数据返回 ##
 	
+	//参数1 数组
+	//状态码，默认200
+	return response()->json(['id'=>1,'name'=>'张三']，201);
+
+# 视图 #
+
+视图的作用就是用来存放应用程序中 HTML 内容，并且能够将你的控制器层与展示层分开。我们在控制器中使用助手函数 view() 来加载视图模板。
+
+## 视图目录位置 ##
+
+视图文件放置在<u>项目目录、resources/views</u> 文件夹中
+
+## 视图命名 ##
+
+视图文件是以 .blade.php为后缀名
+
+	// 一定要写模板的名称  模板在 /resources/views/index.blade.php
+    return view('index');
+
+如果视图文件是在 resources/views</u> 下的不同模块中，如在 resources/views/html/</u> 文件夹中，可按照如下写法。提示：可以多层目录。
+
+	return view('html.index'); // 推荐写法
+    return view('html/index'); // 不推荐
+
+## 分配数据到模板 ##
+
+### 关联数组的形式来传值 ###
+	
+	//控制器中
+	$data = ['id'=>1,'name'=>'张三'];
+    return view('html.index',$data);
+	//模板中
+	<p>ID：{{ $id }}</p>
+    <p>Name：{{ $name }}</p>
+	
+	//或者
+	//控制器中
+	$data = ['id'=>1,'name'=>'张三'];
+    return view('html.index',['data'=>$data]);	
+	//模板中
+	<p>ID：{{ $data['id'] }}</p>
+    <p>Name：{{ $data['name'] }}</p>
+
+### compact【推荐】 ###
+
+	//控制器中
+	$data = ['id'=>1,'name'=>'张三'];
+    return view('html.index',compact('data'));
+	//模板中
+	<p>ID：{{ $data['id'] }}</p>
+    <p>Name：{{ $data['name'] }}</p>
+
+### with ###
+
+	//控制器中
+	$data = ['id'=>1,'name'=>'张三'];
+    return view('html.index')->with(['data'=>$data]);
+	//模板中
+	<p>ID：{{ $data['id'] }}</p>
+    <p>Name：{{ $data['name'] }}</p>
+
+## 模板中输出变量 ##
+
+{{$变量名}}，如：{{$name}}
+
+	<p>Name：{{ $data['name'] }}</p>
+
+### 三元运算 ###
+
+{{ $name or 'default' }} 等价于 <?php> echo isset($name)?$name:'default' ?>
+
+	<p>年龄：{{ $data['age'] or '没有定义' }}</p>
+	{{-- 建议在laravel5.7之后用 --}}  // Blade模板引擎注释风格
+    <p>年龄：{{ $data['age'] ?? '没有定义' }}</p>
+
+### 未转义输出 ###
+
+如果变量信息里有html标记信息，在输出的时候html标记会被转化为实体符号，而没有被浏览器解析掉，如果希望看到被浏览器解析后的内容，就需要设置两个<font color=red>俩个感叹号</font>，如：{!! $变量名 !!}
+
+	//控制器中
+	$data = ['id'=>1,'name'=>'张三'];
+    $tite = "<a href='www.baidu.com'>百度一下</a>";
+    return view('html.index',compact('data','title'));
+	//模板中
+	<p>{!! $title !!}</p>
+
+### 原始形态输出 ###
+
+由于很多 Javascript 框架都使用花括号来表明所提供的表达式，所以你可以使用 @ 符号来告知Blade渲染引擎你需要保留这个表达式的原始形态，如：@{{ $变量名 }}
+
+## 使用函数 ##
+
+可以在 Blade 模板中直接使用 php 函数，{{php函数名}}
+
+	<p>{{ date('Y-m-d') }}</p>
+
+## if语句 ##
+
+	<div>
+	    <h3>条件判断</h3>
+	    @if($age <= 18)
+	        <h4>少年</h4>
+	    @elseif( $age <= 40 )
+	        <h4>青年</h4>
+	    @elseif( 40 > $age )
+	        <h4>中年</h4>
+	    @endif
+	</div>
+
+## Switch语句 ##
+
+可以使用 @switch、@case、@break、@default 和 @endswitch 指令来构建 Switch 语句：
+
+	@switch($i)
+	    @case(1)
+	        First case...
+	        @break
+	
+	    @case(2)
+	        Second case...
+	        @break
+	
+	    @default
+	        Default case...
+	@endswitch
+
+## 循环 ##
+
+### for循环 ###
+
+	@for ($i = 0; $i < 10; $i++)
+	    目前的值为 {{ $i }}
+	@endfor
+
+### foreach循环 ###
+
+	@foreach ($users as $user)
+	    <p>此用户为 {{ $user->id }}</p>
+	@endforeach
+
+### forelse循环 ###
+
+	@forelse ($users as $user)
+	    <li>{{ $user->name }}</li>
+	@empty
+	    <p>没有用户</p>
+	@endforelse
+
+### while循环 ###
+
+	@while (true)
+	    <p>死循环了</p>
+	@endwhile
+
+### 循环其他事项 ###
+
+循环时，你可以使用 循环变量 来获取循环的信息，例如是否在循环中进行第一次或最后一次迭代。
+
+当使用循环时，你也可以结束循环或跳过当前迭代：
+
+	@foreach ($users as $user)
+	    @if ($user->type == 1)
+	        @continue
+	    @endif
+	
+	    <li>{{ $user->name }}</li>
+	
+	    @if ($user->number == 5)
+	        @break
+	    @endif
+	@endforeach
+
+你还可以使用一行代码包含指令声明的条件：
+
+	@foreach ($users as $user)
+	    @continue($user->type == 1)
+	
+	    <li>{{ $user->name }}</li>
+	
+	    @break($user->number == 5)
+	@endforeach
+
+### 循环变量 ###
+
+循环时，可以在循环内使用 $loop 变量。这个变量可以提供一些有用的信息，比如当前循环的索引，当前循环是不是首次迭代，又或者当前循环是不是最后一次迭代：
+
+	@foreach ($users as $user)
+	    @if ($loop->first)
+	        这是第一个迭代。
+	    @endif
+	
+	    @if ($loop->last)
+	        这是最后一个迭代。
+	    @endif
+	
+	    <p>This is user {{ $user->id }}</p>
+	@endforeach
+
+在一个嵌套的循环中，可以通过使用 $loop 变量的 parent 属性来获取父循环中的 $loop 变量：
+
+	@foreach ($users as $user)
+	    @foreach ($user->posts as $post)
+	        @if ($loop->parent->first)
+	            This is first iteration of the parent loop.
+	        @endif
+	    @endforeach
+	@endforeach
+
+$loop 变量也包含了其它各种有用的属性：
+
+属性 | 描述
+:-|:-
+$loop->index | 当前循环迭代的索引（从0开始）。
+$loop->iteration | 当前循环迭代 （从1开始）。
+$loop->remaining | 循环中剩余迭代数量。
+$loop->count | 迭代中的数组项目总数。
+$loop->first | 当前迭代是否是循环中的首次迭代。
+$loop->last | 当前迭代是否是循环中的最后一次迭代。
+$loop->depth| 当前循环的嵌套级别。
+$loop->parent | 在嵌套循环中，父循环的变量。
+
+## 模板包含  ##
+
+你可以使用 Blade 的 @include 命令来引入一个已存在的视图，所有在父视图的可用变量在被引入的视图中都是可用的。
+
+	<div>
+		// public 表示 views 下的 public目录
+		// header 表示在 views/public/heade.blade.php文件
+	    @include('public.header') 
+	
+	    <form>
+	        <!-- 表单内容 -->
+	    </form>
+	</div>
+
+被引入的视图会继承父视图中的所有数据，同时也可以向引入的视图传递额外的数组数据：
+
+	@include('view.name', ['some' => 'data']);
+
+当然，如果尝试使用 @include 去引入一个不存在的视图，Laravel 会抛出错误。如果想引入一个可能存在或可能不存在的视图，就使用 @includeIf 指令:
+
+	@includeIf('view.name', ['some' => 'data']);
+
+如果要根据给定的布尔条件 @include 视图，可以使用 @includeWhen 指令：
+
+	@includeWhen($boolean, 'view.name', ['some' => 'data']);
+
+要包含来自给定数组视图的第一个视图，可以使用 includeFirst 指令：
+
+	@includeFirst(['custom.admin', 'admin'], ['some' => 'data']);
+
+**提示：** 请避免在 Blade 视图中使用  __DIR__ 及 __FILE__ 常量，因为它们会引用编译视图时缓存的位置。 
+
+## 模板继承  ##
+
+在一个项目中有许多模板文件，它们们有一个特点：拥有共同的头部和底部内容。为了避免相同代码重复开发、维护，可以把共同的头部和底部类容集中到一个布局文件中，之后各个具体的模板文件去继承该布局文件而使用头部和底部内容，这就是模板继承。
+
+	// 继承 resource/views/layouts/home.blade.php布局文件
+	@exrends('laoyouts.home')
+	// 使用 section 标签替换布局模板中的可变区域
+	@section('content')
+		给布局文件 yield('content')的区域进行内容填充 
+	@endsection
+
+父级模板文件中定义
+	
+	<!doctype html>
+	<html lang="en">
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport"
+	          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+	    <title>@yield('title')</title>
+	    @yield('css')
+	</head>
+	<body>
+	
+	<div>
+	    <div>头部</div>
+	    @yield('content')
+	    <div>底部</div>
+	</div>
+	
+	</body>
+	</html>
+
+继承的子模板中使用
+
+	//继承公共的父级模板
+	@exrends('laoyouts.home')
+	{{-- 用法1 --}}
+	@section('title','content')
+	{{-- 用法2 双标签 --}}
+	@section('content')
+		your content
+	@endsection 
