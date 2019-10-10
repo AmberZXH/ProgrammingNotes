@@ -820,13 +820,17 @@ $loop->parent | 在嵌套循环中，父循环的变量。
 
 Laravel提供了多种不同的验证方法来对应用程序传入的数据进行验证。
 
-<font color=red>注：多个验证规则可以通过 | 字符进行隔开</font>，以下为常用验证规则
+## 验证规则 ##
+
+<font color=red>注：多个验证规则可以通过 | 字符进行隔开。</font>
+
+以下为部分常用验证规则：
 
 规则 | 说明
 :- | :-
 required | 不能为空
 max:value | 字段值必须 <= value，对于字符串来说，value为字符数
-min:value | 字段值必须 <= value，对于字符串来说，value为字符数
+min:value | 字段值必须 >= value，对于字符串来说，value为字符数
 email | 验证邮箱是否合法
 url | 验证字段是否是有效的 URL 格式
 confirmed | 验证连个字段是否相同，如果验证的字段是password，则必须输入一个与之匹配的password_confirmation字段
@@ -838,3 +842,242 @@ string | 验证字段必须是字符串
 unique | 表面，字段，需要排除的ID
 between:min,max | 验证字段值的大小是否介于指定的min和max之间。字符串、数值或是文件大小的计算方式和size规则相同
 
+## 表单的CSRF验证 ##
+
+表单验证前，我们要对表单的CSRF验证进行处理：
+
+	//只生成token值没有html代码，适用于 ajax提交
+	{{ csrf_token }} 
+
+	//生成token的同时还生成了html代码 适用于一般的表单提交
+	{{ csrf_field() }} 或 {{ @csrf }} ( >=5.6版本写法 )  
+
+![表单TOKEN](https://raw.githubusercontent.com/CayangPro/my_notes/master/Laravel/img/yz-1.jpg)
+
+## $this->validate() 验证 ##
+
+$this->validate() 验证比较常用，一般用在控制器中：
+
+	class LoginController extends Controller
+	{
+	    // 登录处理
+	    public function login(Request $request)
+	    {
+	        //后台表单验证
+	        $this->validate($request,[
+	            //表单的字段名 => 规则名 多个规则用 | 分开
+	            'username' => 'required',
+	            'password' => 'required|min:6'
+	        ],[
+	            //自定义错误提示消息
+	            //表单字段名.规则名  =>  错误提示
+	            'username.required' => '用户名必须填写',
+	            'password.required' => '密码必须填写',
+	            'password.min'      => '密码不小于6位'
+	        ]);
+			dump($request->all());
+	    }
+	
+	}
+
+## 独立方式验证 ##
+
+此方法一般用在模型中
+
+	<?php
+
+	namespace App\Http\Controllers;
+	
+	use Illuminate\Http\Request;
+	//引入类
+	use Validator;
+
+	class LoginController extends Controller
+	{
+	    // 登录处理
+	    public function login(Request $request)
+	    {
+	        //后台表单验证
+			//返回的是validate对象
+	        $validate = Validator::make($request->all(),[
+	            //表单的字段名 => 规则名 多个规则用 | 分开
+	            'username' => 'required',
+	            'password' => 'required|min:6'
+	        ],[
+	            //自定义错误提示消息
+	            //表单字段名.规则名 => 错误提示
+	            'username.required' => '用户名必须填写',
+	            'password.required' => '密码必须填写',
+	            'password.min'      => '密码不小于6位'
+	        ]);
+			//如果有错就返回true
+			if($validate->fails()){
+				return redirect()->back()->withErrors($validate);
+			}
+			dump($request->all());
+			
+	    }
+	
+	}
+
+## 验证器方式验证【推荐】 ##
+
+1. 使用 artisan make:request 验证器名称（UserRequest）命令创建验证器类
+2. 在验证器中将授权改为true,写入验证规则和错误提示信息
+3. 在控制器中用依赖的注入方式使用
+
+如下所示：
+
+	<?php
+
+	namespace App\Http\Requests;
+	
+	use Illuminate\Foundation\Http\FormRequest;
+	
+	class UserRequest extends FormRequest
+	{
+	    public function authorize()
+	    {
+	        //return false;
+	        return true; // 将授权改为true
+	    }
+	    public function rules()
+	    {
+	        return [
+	            //表单的字段名 => 规则名 多个规则用 | 分开
+	            'username' => 'required',
+	            'password' => 'required|min:6'
+	        ];
+	    }
+	
+	    //自定义错误提示消息
+	    public function messages()
+	    {
+	        return [
+	            //表单字段名.规则名 => 错误提示
+	            'username.required' => '用户名必须填写',
+	            'password.required' => '密码必须填写',
+	            'password.min'      => '密码不小于6位'
+			];
+	    }
+	}
+
+在控制器中引入自定义的验证器类：
+
+	//引入自定义的验证器类
+	use App\Http\Requests\UserRequest;
+
+在控制器中使用：public function login(<font color=red>UserRequest</font> $request){...}
+
+	class LoginController extends Controller
+	{
+	    // 登录处理
+	    public function login(UserRequest $request)
+	    {
+	        dump($request->all());
+	    }
+	
+	}
+
+## 模板中输出错误信息 ##
+
+	<!-- /resources/views/post/create.blade.php -->
+	
+	<h1>创建文章</h1>
+	@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+	@endif
+	
+	<!-- 创建文章表单 -->
+
+## 错误提示换成中文 ##
+
+1. 在packagist网站：https://packagist.org搜索lang
+2. 选择：caouecs/laravel-lang(Languages for Laravel)
+3. 进入项目的gitHub地址
+4. 下载src目录中的zh-CN目录
+5. 将zh-CN目录放在Laravel的resources\lang目录下
+6. 将config\app.php中的 'locale' => 'en' 改为 'locale' => 'zh-CN' 
+
+# DB类操作数据库 #
+
+## Laravel支持的数据库类型 ##
+
+Laravel 能使用原生 SQL、查询构造器 和 Eloquent ORM 在各种数据库后台与数据库进行非常简单的交互。当前 Laravel 支持四种数据库:
+
+- MySQL
+- Postgres
+- SQLite
+- SQL Server
+
+Laravel操作数据库所使用的扩展是PDO扩展，一定要开启PDO扩展，PHP配置文件中打开PDO扩展：extension=php_pdo_mysql.dll
+
+## 配置连接数据库信息 ##
+
+在Laravel中修改连接数据库的文件有两处：
+
+- 修改 .env 文件【推荐】（ 好处：方便调控部署，线上线下不需要切换php代码 ）
+- 修改 config/database.php 文件
+
+
+<font color=red>**提示：**
+
+- Laravel5.4之后对数据库的编码就进行了默认改变，默认使用utf8mb4，MySQL版本最好 >= 5.6
+- 创建数据库时字符集选用：utf8mb4--UTF-8 Unicode，排序规则：utf8mb4_unicode_ci
+
+</font>
+
+修改 .env 文件来接数据库：
+
+	DB_CONNECTION=mysql
+	DB_HOST=主机地址
+	DB_PORT=端口
+	DB_DATABASE=数据库名
+	DB_USERNAME=用户名
+	DB_PASSWORD=密码
+
+配置后发现，如果数据表有前缀的话，在 .env 文件中不能去设置，解决办法：
+
+- 在config/databse.php文件中修改'connections' 数组中的 'mysql'数组中修改: 'prefix' => env('DB_PREFIX', ''),
+- 在 .env 文件中来接数据库的位置加上：DB_PREFIX=表前缀
+
+config/databse.php文件中：
+
+	'connections' => [
+			...,
+	        'mysql' => [
+	            'driver' => 'mysql',
+	            'host' => env('DB_HOST', '127.0.0.1'),
+	            'port' => env('DB_PORT', '3306'),
+	            'database' => env('DB_DATABASE', 'forge'),
+	            'username' => env('DB_USERNAME', 'forge'),
+	            'password' => env('DB_PASSWORD', ''),
+	            'unix_socket' => env('DB_SOCKET', ''),
+	            'charset' => 'utf8mb4',
+	            'collation' => 'utf8mb4_unicode_ci',
+	            //给 .env 文件中添加表前缀
+	            'prefix' => env('DB_PREFIX', ''),
+	            //严格模式
+	            'strict' => true,
+	            'engine' => null,
+	        ],
+			...
+		]
+
+.env 文件中：
+	
+	...
+	DB_CONNECTION=mysql
+	DB_HOST=主机地址
+	DB_PORT=端口
+	DB_DATABASE=数据库名
+	DB_USERNAME=用户名
+	DB_PASSWORD=密码
+	DB_PREFIX=表前缀名_
+	...
