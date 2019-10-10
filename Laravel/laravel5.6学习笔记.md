@@ -1,4 +1,4 @@
-<font size=6>**Laravle学习笔记**</font>
+<font size=6>**Laravle5.6学习笔记**</font>
 
 # 安装 #
 
@@ -813,3 +813,28 @@ $loop->parent | 在嵌套循环中，父循环的变量。
 	@section('content')
 		your content
 	@endsection 
+
+# 表单验证 #
+
+表单验证是为了防止访问者跳过客户端验证而造成系统安全问题，一旦非法用户绕过客户端验证而服务器端没有验证，就很不安全，所以项目必须要进行服务器端表单验证。
+
+Laravel提供了多种不同的验证方法来对应用程序传入的数据进行验证。
+
+<font color=red>注：多个验证规则可以通过 | 字符进行隔开</font>，以下为常用验证规则
+
+规则 | 说明
+:- | :-
+required | 不能为空
+max:value | 字段值必须 <= value，对于字符串来说，value为字符数
+min:value | 字段值必须 <= value，对于字符串来说，value为字符数
+email | 验证邮箱是否合法
+url | 验证字段是否是有效的 URL 格式
+confirmed | 验证连个字段是否相同，如果验证的字段是password，则必须输入一个与之匹配的password_confirmation字段
+integer | 验证字段必须是整型
+ip | 验证字段必须是 IP 地址
+numeric | 字段必须是数值
+size:value | 验证字符必须和给定值value相匹配，对字符串而言，value是相应的字符数目；对数值而言，value是给定整型值；对文件而言，value是相应的文件字节数
+string | 验证字段必须是字符串
+unique | 表面，字段，需要排除的ID
+between:min,max | 验证字段值的大小是否介于指定的min和max之间。字符串、数值或是文件大小的计算方式和size规则相同
+
