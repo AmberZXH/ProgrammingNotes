@@ -6,6 +6,14 @@
 
 	composer create-project --prefer-dist laravel/laravel blog
 
+## 安装laravel-debugbar调试工具 ##
+
+1. 在packagist中搜索laravel-debugbar
+2. 项目中执行composer require barryvdh/laravel-debugbar
+3. 在config/app.php加入： `Barryvdh\Debugbar\ServiceProvider::class，`
+4. 线上时注释掉第三步的代码
+
+
 # 目录结构 #
 
 ## 主要目录结构 ##
@@ -1005,7 +1013,7 @@ $this->validate() 验证比较常用，一般用在控制器中：
 5. 将zh-CN目录放在Laravel的resources\lang目录下
 6. 将config\app.php中的 'locale' => 'en' 改为 'locale' => 'zh-CN' 
 
-# DB类操作数据库 #
+# 数据库 #
 
 ## Laravel支持的数据库类型 ##
 
@@ -1050,25 +1058,25 @@ Laravel操作数据库所使用的扩展是PDO扩展，一定要开启PDO扩展�
 config/databse.php文件中：
 
 	'connections' => [
-			...,
-	        'mysql' => [
-	            'driver' => 'mysql',
-	            'host' => env('DB_HOST', '127.0.0.1'),
-	            'port' => env('DB_PORT', '3306'),
-	            'database' => env('DB_DATABASE', 'forge'),
-	            'username' => env('DB_USERNAME', 'forge'),
-	            'password' => env('DB_PASSWORD', ''),
-	            'unix_socket' => env('DB_SOCKET', ''),
-	            'charset' => 'utf8mb4',
-	            'collation' => 'utf8mb4_unicode_ci',
-	            //给 .env 文件中添加表前缀
-	            'prefix' => env('DB_PREFIX', ''),
-	            //严格模式
-	            'strict' => true,
-	            'engine' => null,
-	        ],
-			...
-		]
+		...,
+        'mysql' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            //给 .env 文件中添加表前缀
+            'prefix' => env('DB_PREFIX', ''),
+            //严格模式
+            'strict' => true,
+            'engine' => null,
+        ],
+		...
+	]
 
 .env 文件中：
 	
@@ -1081,3 +1089,122 @@ config/databse.php文件中：
 	DB_PASSWORD=密码
 	DB_PREFIX=表前缀名_
 	...
+
+## 检查数据库配置是否正确 ##
+
+	ROute::get('pdo',functon(){
+		dump(\DB::connection());
+	});
+
+## DB类执行原生SQL语句 ##
+
+<font color=red>注：数据表设计时，表的字段就算没有默认值，也要设一个空字符串。</font>
+
+添加操作，返回 true/false:
+	
+	$sql = "insert into la_users (username,password) values (:username,:password)";
+	//$res = DB::insert($sql,[':username'=>'jack',':password'=>'admin888']);
+    $res = DB::insert($sql,['username'=>'jack','password'=>'admin888']);
+    dump($res);
+
+修改操作，返回受影响的条数：
+
+	$sql = "update la_users set username=:username where id=:id";
+    $res = DB::update($sql,['username'=>'张三','id'=>1]);
+
+查询单条操作，返回一个集合对象：
+
+	$sql = "select * from la_users where id=:id";
+    $res = DB::selectOne($sql,['id'=>1]);
+
+查询多条操作，返回一个数组的集合：
+
+	$sql = "select * from la_users where id>:id";
+    $res = DB::select($sql,['id'=>1]);
+
+删除操作，返回受影响的条数：
+
+	$sql = "delete from la_users where id=:id";
+    $res = DB::delete($sql,['id'=>3]);
+
+## 查询构造器操作数据库 ##
+
+Laravel 的查询构造器使用 PDO 参数绑定来保护您的应用程序免受 SQL 注入攻击。因此没有必要清理作为绑定传递的字符串。
+
+<font color=red>注：使用查询构造器时表名不需要写表前缀。</font>
+
+### 查询 ###
+
+此处只列举了部分查询操作，完整查询方法请参考官方文档
+
+查询全部，所有字段都查询：
+
+	$res = DB::table('users')->get();
+		
+查询全部，并指定字段：
+
+	//方法一
+    $res = DB::table('users')->get(['password']);
+    //方法二
+    $res = DB::table('users')->select('username','password')->get();
+		
+对象转为数组：
+
+	$res = DB::table('users')->get()->toArray();
+		
+where条件查询：
+
+    $res = DB::table('users')->where('id','>=', '2')->get();
+	//条件查询：或者
+    $res = DB::table('users')->where('id','>=', '3')->orWhere('id','1')->get();
+
+	//where还可以传入数组
+    $res = DB::table('users')->where([
+        ['id','<>','4'],
+        ['id','>','3']
+    ])->get();
+
+	//字段的值在指定的数组内
+	$res = DB::table('users')->whereIn('id', [1, 2, 3])->get();
+
+	//字段的值在指定的数组内
+	$res = DB::table('users')->whereNotIn('id', [1, 2, 3])->get();
+		
+if条件语句，根据关键词搜索：
+
+	//when中的 $kw 为真，执行匿名函数的内容
+    $kw = $request->get('kw');
+    $res = DB::table('users')->when($kw,function (Builder $query) use ($kw){
+        $query->where('password','like',"%{$kw}%");
+    })->get();
+		
+获取单条数据：
+
+	//没有返回 null
+    $res = DB::table('users')->where('id',6)->first();
+
+	//获取某个具体的值
+    $res = DB::table('users')->where('id',3)->value('password');
+
+	//获取某列的值
+    $res = DB::table('users')->pluck('password');
+	//获取某列的值，也可以在返回的集合中指定字段的自定义键名
+    $res = DB::table('users')->pluck('password','id');
+		
+排序：
+
+    $res = DB::table('users')->orderBy('id','desc')->get();
+
+查询总记录数：
+
+    $res = DB::table('users')->count();
+
+分页：
+
+	//offset：起始位置  limt:输出的条数
+	$res = DB::table('users')->orderBy('id','desc')->offset(0)->limit(2)->get();
+
+### 添加 ###
+
+		
+		
