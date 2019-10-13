@@ -1206,5 +1206,288 @@ if条件语句，根据关键词搜索：
 
 ### 添加 ###
 
+查询构造器还提供了 insert 方法用于插入记录到数据库中。 insert 方法接收数组形式的字段名和字段值进行插入操作，返回true或false：
+
+	DB::table('users')->insert(
+		['email' => 'john@example.com', 'votes' => 0]
+	);
+
+还可以在 insert 中传入一个嵌套数组向表中插入多条记录。每个数组代表要插入表中的行：
+
+	DB::table('users')->insert([
+	    ['email' => 'taylor@example.com', 'votes' => 0],
+	    ['email' => 'dayle@example.com', 'votes' => 0]
+	]);
 		
-		
+#### 自增 ID ####
+
+如果数据表有自增 ID，使用 insertGetId 方法来插入记录并返回 ID 值：
+
+	$id = DB::table('users')->insertGetId(
+	    ['email' => 'john@example.com', 'votes' => 0]
+	);
+
+### 更新 ###
+
+查询构造器也可通过 update 方法更新已有的记录，返回受影响的行数。 update 方法和 insert 方法一样，接受包含要更新的字段及值的数组。 你可以通过 where 子句对 update 查询进行约束：
+
+	DB::table('users')
+            ->where('id', 1)
+            ->update(['votes' => 1]);
+
+#### 更新 JSON 字段 ####
+
+更新 JSON 字段时，你可以使用 -> 语法访问 JSON 对象上相应的值，该操作只能用于支持 JSON 字段类型的数据库：
+
+	DB::table('users')
+            ->where('id', 1)
+            ->update(['options->enabled' => true]);
+
+#### 自增与自减 ####
+
+查询构造器还为给定字段的递增或递减提供了方便的方法。 此方法提供了一个比手动编写 update 语句更具表达力且更精练的接口。
+
+这两个方法都至少接收一个参数：需要修改的列。第二个参数是可选的，用于控制列递增或递减的量。
+
+	DB::table('users')->increment('votes');
+	
+	DB::table('users')->increment('votes', 5);
+	
+	DB::table('users')->decrement('votes');
+	
+	DB::table('users')->decrement('votes', 5);
+
+也可以在操作过程中指定要更新的字段：
+
+	DB::table('users')->increment('votes', 1, ['name' => 'John']);
+
+### 删除 ###
+
+查询构造器也可以使用 delete 方法从数据表中删除记录。在使用 delete 前，可添加 where 子句来约束 delete 语法：
+
+	DB::table('users')->delete();
+	
+	DB::table('users')->where('votes', '>', 100)->delete();
+	
+	//简写，主键名必须是id
+	DB::table('users')->delete(10);
+
+如果你需要清空表，你可以使用 truncate 方法，这将删除所有行，并重置自增 ID 为零：
+
+	DB::table('users')->truncate();
+
+#### 悲观锁 ####
+
+查询构造器也包含一些可以帮助你在 select 语法上实现 「悲观锁定」的函数。若想在查询中实现一个「共享锁」，你可以使用 sharedLock 方法。共享锁可防止选中的数据列被篡改，直到事务被提交为止 ：
+
+	DB::table('users')->where('votes', '>', 100)->sharedLock()->get();	
+
+另外，你也可以使用 lockForUpdate 方法。使用「更新」锁可避免行被其它共享锁修改或选取：
+
+	DB::table('users')->where('votes', '>', 100)->lockForUpdate()->get();
+
+## 数据库迁移 ##
+
+迁移就像是数据库的版本控制，允许团队简单轻松的编辑并共享应用的数据库表结构，迁移通常和 Laravel 的 数据库结构生成器配合使用，让你轻松地构建数据库结构。如果你曾经试过让同事手动在数据库结构中添加字段，那么数据库迁移可以让你不再需要做这样的事情。
+
+就是使用php文件编写的代码来进行数据库表结构的创建和修改，可以做到快速部署、永久保存、方便管理数据库。
+
+
+### 生成与编写迁移 ###
+
+使用 Artisan 命令 make:migration 来创建迁移。
+
+新的迁移位于 <u>database/migrations</u> 目录下。每个迁移文件名都包含时间戳，以便让 Laravel 确认迁移的顺序。
+
+--table 和 --create 选项可用来指定数据表的名称，或是该迁移被执行时是否将创建的新数据表。这些选项需在预生成迁移文件时填入指定的数据表：
+	
+	php artisn make:migration create_users_table
+	
+	create_users_table   生成的文件后缀名称
+
+	php artisan make:migration create_users_table --create=test
+	
+	--create=test   生成表名为 test 的数据表
+
+如果你想要指定生成迁移指定一个自定义输出路径，则可以在运行 make:migration 命令时添加 --path 选项，给定的路径必须是相对于应用程序的基本路径。
+
+
+### 迁移结构 ###
+
+迁移类通常会包含 2 个方法： up 和 down。 up 方法用于添加新的数据表， 字段或者索引到数据库， 而 down 方法就是 up 方法的反操作，和 up 里的操作相反。
+
+在这 2 个方法中都要用到 Laravel 的 Schema 构建器来创建和修改表，
+若要了解 Schema 生成器中的所有可用方法 ，[可以查看它的文档](https://learnku.com/docs/laravel/5.6/migrations/1400#creating-tables "可以查看它的文档")。比如，创建 flights 表的简单示例:
+
+	<?php
+
+	use Illuminate\Support\Facades\Schema;
+	use Illuminate\Database\Schema\Blueprint;
+	use Illuminate\Database\Migrations\Migration;
+	
+	class CreateFlightsTable extends Migration
+	{
+	    /**
+	     * 运行数据库迁移
+	     *
+	     * @return void
+	     */
+	    public function up()
+	    {
+	        Schema::create('flights', function (Blueprint $table) {
+	            $table->increments('id');
+	            $table->string('name');
+	            $table->string('airline');
+	            $table->timestamps();
+	        });
+	    }
+	
+	    /**
+	     * 回滚数据库迁移
+	     *
+	     * @return void
+	     */
+	    public function down()
+	    {
+	        //Schema::drop('flights');
+			// 如果表存在，就删除
+			Schema::dropIfExists('password_resets');
+	    }
+	}
+
+### 执行数据迁移 ###
+
+使用 Artisan 命令 migrate 方法来运行所有未完成的迁移：
+
+	php artisan migrate
+
+#### 在生产环境强制执行迁移 ####
+
+一些迁移操作是具有破坏性的， 这意味着可能会导致数据丢失。 为了防止有人在生产环境中运行这些命令， 系统会在这些命令被运行之前与你进行确认。如果要强制忽略系统的提示运行命令， 则可以使用 --force 标记：
+
+	php artisan migrate --force
+
+### 回滚迁移 ###
+
+若要回滚最后一次迁移， 可以使用 rollback 命令。 此命令将回滚最后一次 “迁移” 的操作，其中可能包含多个迁移文件：
+
+	php artisan migrate:rollback
+
+可以在 rollback 命令后面加上 step 参数，来限制回滚迁移的个数。 例如，以下命令将回滚最近五次迁移：
+
+	php artisan migrate:rollback --step=5
+
+migrate:reset 命令可以回滚应用程序中的所有迁移：
+	
+	php artisan migrate:reset
+
+#### 使用单个命令来执行回滚或迁移 ####
+
+migrate:refresh 命令不仅会回滚数据库的所有迁移还会接着运行 migrate 命令。 这个命令可以高效地重建整个数据库：
+
+	php artisan migrate:refresh 
+
+	// 刷新数据库结构并执行数据填充
+	php artisan migrate:refresh --seed
+
+使用 refresh 命令并提供 step 参数来回滚并再执行最后指定的迁移数。例如， 以下命令将回滚并重新执行最后五次迁移：
+
+	php artisan migrate:refresh --step=5
+
+#### 删除所有表 & 迁移 ####
+
+migrate:fresh 命令会从数据库中删除所有表，然后执行 migrate 命令:
+
+	php artisan migrate:fresh
+
+	php artisan migrate:fresh --seed
+
+### 数据表 ###
+
+#### 可用的字段类型 ####
+
+数据库结构生成器包含构建表时可以指定的各种字段类型：
+
+Command | Description
+:-|:-
+$table->bigIncrements('id'); | 递增 ID（主键），相当于「UNSIGNED BIG INTEGER」
+$table->bigInteger('votes'); | 相当于 BIGINT
+$table->binary('data'); | 相当于 BLOB
+$table->boolean('confirm ed'); | 相当于 BOOLEAN
+$table->char('name', 100); | 相当于带有长度的 CHAR
+$table->date('created_at'); | 相当于 DATE
+$table->dateTime('created_at'); | 相当于 DATETIME
+$table->dateTimeTz('created_at'); | 相当于带时区 DATETIME
+$table->decimal('amount', 8, 2); | 相当于带有精度与基数 DECIMAL
+$table->double('amount', 8, 2); | 相当于带有精度与基数 DOUBLE
+$table->enum('level', ['easy', 'hard']); | 相当于 ENUM
+$table->float('amount', 8, 2); | 相当于带有精度与基数 FLOAT
+$table->geometry('positions'); | 相当于 GEOMETRY
+$table->geometryCollection('positions');| 相当于 GEOMETRYCOLLECTION
+$table->increments('id'); | 递增的 ID (主键)，相当于「UNSIGNED INTEGER」
+$table->integer('votes'); | 相当于 INTEGER
+$table->ipAddress('visitor'); | 相当于 IP 地址
+$table->json('options'); | 相当于 JSON
+$table->jsonb('options'); | 相当于 JSONB
+$table->lineString('positions'); | 相当于 LINESTRING
+$table->longText('description'); | 相当于 LONGTEXT
+$table->macAddress('device'); | 相当于 MAC 地址
+$table->mediumIncrements('id'); | 递增 ID (主键) ，相当于「UNSIGNED MEDIUM INTEGER」
+$table->mediumInteger('votes'); | 相当于 MEDIUMINT
+$table->mediumText('description'); | 相当于 MEDIUMTEXT
+$table->morphs('taggable'); | 相当于加入递增的 taggable_id 与字符串 taggable_type
+$table->multiLineString('positions'); | 相当于 MULTILINESTRING
+$table->multiPoint('positions'); | 相当于 MULTIPOINT
+$table->multiPolygon('positions'); | 相当于 MULTIPOLYGON
+$table->nullableMorphs('taggable'); | 相当于可空版本的 morphs() 字段
+$table->nullableTimestamps(); | 相当于可空版本的 timestamps() 字段
+$table->point('position'); | 相当于 POINT
+$table->polygon('positions'); | 相当于 POLYGON
+$table->rememberToken(); | 相当于可空版本的 VARCHAR (100) 的 remember_token 字段
+$table->smallIncrements('id'); | 递增 ID (主键) ，相当于「UNSIGNED SMALL INTEGER」
+$table->smallInteger('votes'); | 相当于 SMALLINT
+$table->softDeletes(); | 相当于为软删除添加一个可空的 deleted_at 字段
+$table->softDeletesTz(); | 相当于为软删除添加一个可空的 带时区的 deleted_at 字段
+$table->string('name', 100); | 相当于带长度的 VARCHAR
+$table->text('description'); | 相当于 TEXT
+$table->time('sunrise'); | 相当于 TIME
+$table->timeTz('sunrise'); | 相当于带时区的 TIME
+$table->timestamp('added_on'); | 相当于 TIMESTAMP
+$table->timestampTz('added_on'); | 相当于带时区的 TIMESTAMP
+$table->timestamps(); | 相当于可空的 created_at 和 updated_at TIMESTAMP
+$table->timestampsTz(); | 相当于可空且带时区的 created_at 和 updated_at TIMESTAMP
+$table->tinyIncrements('id'); | 相当于自动递增 UNSIGNED TINYINT
+$table->tinyInteger('votes'); | 相当于 TINYINT
+$table->unsignedBigInteger('votes'); | 相当于 Unsigned BIGINT
+$table->unsignedDecimal('amount', 8, 2); | 相当于带有精度和基数的 UNSIGNED DECIMAL
+$table->unsignedInteger('votes'); | 相当于 Unsigned INT
+$table->unsignedMediumInteger('votes'); | 相当于 Unsigned MEDIUMINT
+$table->unsignedSmallInteger('votes'); | 相当于 Unsigned SMALLINT
+$table->unsignedTinyInteger('votes'); | 相当于 Unsigned TINYINT
+$table->uuid('id'); | 相当于 UUID
+$table->year('birth_year'); | 相当于 YEAR
+
+#### 字段修饰 ####
+
+除了上述列出的字段类型之外， 还有几个可以在添加字段时使用的"修饰符" 。例如，如果要把字段设置为 "可空"，就使用 nullable 方法：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->string('email')->nullable();
+	});
+
+以下是所有可用的字段修饰符的列表。此列表不包括 索引修饰符：
+
+Modifier | Description
+:-|:-
+->after('column') | 将此字段放置在其它字段 "之后" (MySQL)
+    ->autoIncrement() | 将 INTEGER 类型的字段设置为自动递增的主键
+->charset('utf8') | 指定一个字符集 (MySQL)
+    ->collation('utf8_unicode_ci') | 指定列的排序规则 (MySQL/SQL Server)
+->comment('my comment') | 为字段增加注释 (MySQL)
+    ->default($value) | 为字段指定 "默认" 值
+->first() | 将此字段放置在数据表的 "首位" (MySQL)
+    ->nullable($value = true) | 此字段允许写入 NULL 值（默认情况下）
+->storedAs($expression) | 创建一个存储生成的字段 (MySQL)
+    ->unsigned() | 设置 INTEGER 类型的字段为 UNSIGNED (MySQL)
+    ->useCurrent() | 将 TIMESTAMP 类型的字段设置为使用 CURRENT_TIMESTAMP 作为默认值
+->virtualAs($expression) | 创建一个虚拟生成的字段 (MySQL)
