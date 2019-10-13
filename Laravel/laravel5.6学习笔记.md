@@ -1340,6 +1340,14 @@ if条件语句，根据关键词搜索：
 	            $table->string('airline');
 	            $table->timestamps();
 	        });
+
+			Schema::create('article', function (Blueprint $table) {
+	            $table->increments('id');
+	            $table->string('title',200)->default('')->comment('标题');
+	            $table->unsignedInteger('uid')->default(0)->comment('用户ID');
+	            $table->text('cent')->comment('文章内容');
+	            $table->timestamps();
+	        });
 	    }
 	
 	    /**
@@ -1388,7 +1396,7 @@ migrate:refresh 命令不仅会回滚数据库的所有迁移还会接着运行 
 	php artisan migrate:refresh 
 
 	// 刷新数据库结构并执行数据填充
-	php artisan migrate:refresh --seed
+	php artisan migrate:refresh --seed  //此方法必须在DatabaseSeeder文件中定义好 call
 
 使用 refresh 命令并提供 step 参数来回滚并再执行最后指定的迁移数。例如， 以下命令将回滚并重新执行最后五次迁移：
 
@@ -1403,6 +1411,67 @@ migrate:fresh 命令会从数据库中删除所有表，然后执行 migrate 命
 	php artisan migrate:fresh --seed
 
 ### 数据表 ###
+
+#### 创建数据表 ####
+
+可以使用 Schema facade 的 create 方法来创建新的数据库表。 create 方法接受两个参数：第一个参数为数据表的名称，第二个参数是 Closure ，此闭包会接收一个用于定义新数据表的 Blueprint 对象：
+
+	Schema::create('users', function (Blueprint $table) {
+	    $table->increments('id');
+	});
+
+#### 检查数据表 / 字段是否存在 ####
+
+可以使用 hasTable 和 hasColumn 方法来检查数据表或字段是否存在：
+
+	if (Schema::hasTable('users')) {
+	    //
+	}
+	
+	if (Schema::hasColumn('users', 'email')) {
+	    //
+	}
+
+#### 数据库连接 & 表选项 ####
+
+如果要对非默认连接的数据库连接执行结构操作，可以使用 connection 方法：
+
+	Schema::connection('foo')->create('users', function (Blueprint $table) {
+	    $table->increments('id');
+	});
+你可以在数据库结构生成器上使用以下命令来定义表的选项：
+
+命令 | 描述
+:-|:-
+$table->engine = 'InnoDB'; | 指定表存储引擎 (MySQL)。
+$table->charset = 'utf8'; | 指定数据表的默认字符集 (MySQL)。
+$table->collation = 'utf8_unicode_ci'; | 指定数据表默认的排序规则 (MySQL)。
+$table->temporary(); | 创建临时表 (不支持 SQL Server)。
+
+#### 重命名 / 删除数据表 ####
+
+若要重命名数据表，可以使用 rename 方法：
+
+	Schema::rename($from, $to);
+
+删除数据表， 可使用 drop 或 dropIfExists 方法：
+
+	Schema::drop('users');
+	
+	Schema::dropIfExists('users');
+
+#### 重命名带外键的数据表 ####
+
+在重命名表之前，你应该验证表上的任何外键约束在迁移文件中都有明确的名称，而不是让 Laravel 按照约定来设置一个名称。否则，外键的约束名称将引用旧表名。
+
+
+#### 创建字段 ####
+
+使用 Schema facade 的 table 方法可以更新现有的数据表。如同 create 方法一样，table 方法会接受两个参数：一个是数据表的名称，另一个则是接收可以用来向表中添加字段的 Blueprint 实例的闭包：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->string('email');
+	});
 
 #### 可用的字段类型 ####
 
@@ -1491,3 +1560,246 @@ Modifier | Description
     ->unsigned() | 设置 INTEGER 类型的字段为 UNSIGNED (MySQL)
     ->useCurrent() | 将 TIMESTAMP 类型的字段设置为使用 CURRENT_TIMESTAMP 作为默认值
 ->virtualAs($expression) | 创建一个虚拟生成的字段 (MySQL)
+
+#### 修改字段 ####
+
+**先决条件**
+
+在修改字段之前，请确保将 doctrine/dbal 依赖添加到 composer.json 文件中。Doctrine DBAL 库用于确定字段的当前状态， 并创建对该字段进行指定调整所需的 SQL 查询：
+
+	composer require doctrine/dbal
+
+#### 更新字段属性 ####
+
+change 方法可以将现有的字段类型修改为新的类型或修改属性。 比如，你可能想增加字符串字段的长度，可以使用 change 方法把 name 字段的长度从 25 增加到 50：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->string('name', 50)->change();
+	});
+
+<font color=red>**注：** 只有下面的字段类型能被 "修改"： bigInteger、 binary、 boolean、date、dateTime、dateTimeTz、decimal、integer、json、 longText、mediumText、smallInteger、string、text、time、 unsignedBigInteger、unsignedInteger and unsignedSmallInteger。</font>
+
+#### 重命名字段 ####
+
+可以使用结构生成器上的 renameColumn 方法来重命名字段。在重命名字段前， 请确保你的 composer.json 文件内已经加入 doctrine/dbal 依赖：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->renameColumn('from', 'to');
+	});
+
+<font color=red>**注：**当前不支持 enum 类型的字段重命名。</font>
+
+#### 删除字段 ####
+
+可以使用结构生成器上的 dropColumn 方法来删除字段。 在从 SQLite 数据库删除字段前，你需要在 composer.json 文件中加入 doctrine/dbal 依赖并在终端执行 composer update 来安装该依赖：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->dropColumn('votes');
+	});
+
+你可以传递一个字段数组给 dropColumn 方法来删除多个字段：
+
+	Schema::table('users', function (Blueprint $table) {
+	    $table->dropColumn(['votes', 'avatar', 'location']);
+	});
+
+<font color=red>**注：**不支持在使用 SQLite 数据库时在单个迁移中删除或修改多个字段。</font>
+
+#### 可用的命令别名 ####
+
+每个索引方法都可以接收一个可选的第二个参数来指定索引的名称。 如果省略，名称将从表和列的名称派生。
+
+Command | Description
+:-|:-
+$table->dropRememberToken(); | 删除 remember_token 字段。
+$table->dropSoftDeletes(); | 删除 deleted_at 字段。
+$table->dropSoftDeletesTz(); | dropSoftDeletes() 方法的别名
+$table->dropTimestamps(); | 删除 created_at 和 updated_at 字段。
+$table->dropTimestampsTz(); | dropTimestamps() 方法的别名。
+
+#### 索引 #### 
+
+**创建索引**
+
+结构生成器支持多种类型的索引。首先，先指定字段值唯一，即简单地在字段定义之后链式调用 unique 方法来创建索引，例如：
+
+	$table->string('email')->unique();
+
+或者，你也可以在定义完字段之后创建索引。例如：
+
+	$table->unique('email');
+
+你甚至可以将数组传递给索引方法来创建一个复合（或合成）索引：
+
+	$table->index(['account_id', 'created_at']);
+
+Laravel 会自动生成一个合理的索引名称，但你也可以传递第二个参数来自定义索引名称：
+
+	$table->unique('email', 'unique_email');
+
+#### 可用的索引类型 ####
+
+命令 | 描述
+:-|:-
+$table->primary('id'); | 添加主键
+$table->primary(['id', 'parent_id']); | 添加复合键
+$table->unique('email'); | 添加唯一索引
+$table->index('state'); | 添加普通索引
+$table->spatialIndex('location'); | 添加空间索引 (SQLite 除外)
+
+#### 索引长度 & MySQL / MariaDB ####
+
+Laravel 默认使用 utf8mb4 字符，它支持在数据库中存储 "emojis" 。 如果你是在版本低于 5.7.7 的 MySQL release 或者版本低于 10.2.2 的 MariaDB release 上创建索引，那就需要你手动配置迁移生成的默认字符串长度。 即在 AppServiceProvider 中调用 Schema::defaultStringLength 方法来配置它 ：
+
+	use Illuminate\Support\Facades\Schema;
+	
+	/**
+	 * 引导任何应用程序服务。
+	 *
+	 * @return void
+	 */
+	public function boot()
+	{
+	    Schema::defaultStringLength(191);
+	}
+
+或者，你可以开启数据库的 innodb_large_prefix 选项。 至于如何正确开启，请自行查阅数据库文档。
+
+#### 删除索引 ####
+
+若要移除索引， 则必须指定索引的名称。Laravel 默认会自动给索引分配合理的名称。其将数据表名称、索引的字段名称及索引类型简单地连接在了一起。举例如下：
+
+命令 | 描述
+:-|:-
+$table->dropPrimary('users_id_primary'); | 从 "users" 表中删除主键
+$table->dropUnique('users_email_unique'); | 从 "users" 表中删除唯一索引
+$table->dropIndex('geo_state_index'); | 从 "geo" 表中删除基本索引
+$table->dropSpatialIndex('geo_location_spatialindex'); | 从 "geo" 表中删除空间索引 (SQLite 除外)
+
+如果将字段数组传递给 dropIndex 方法，会删除根据表名、字段和键类型生成的索引名称：
+
+	Schema::table('geo', function (Blueprint $table) {
+	    $table->dropIndex(['state']); // 删除索引 'geo_state_index'
+	});
+
+#### 外键约束 ####
+
+Laravel 还支持创建用于在数据库层中的强制引用完整性的外键约束。 例如，让我们在 posts 表上定义一个引用 users 表的 id 字段的 user_id 字段：
+
+	Schema::table('posts', function (Blueprint $table) {
+	    $table->integer('user_id')->unsigned();
+	
+	    $table->foreign('user_id')->references('id')->on('users');
+	});
+
+还可以为约束的 "on delete" 和 "on update" 属性指定所需的操作：
+
+	$table->foreign('user_id')
+	      ->references('id')->on('users')
+	      ->onDelete('cascade');
+
+你可以使用 dropForeign 方法删除外键。外键约束采用的命名方式与索引相同。即，将数据表名称和约束的字段连接起来， 接着加上 "_foreign" 后缀：
+
+	$table->dropForeign('posts_user_id_foreign');
+
+或者，你也可以传递一个字段数组，在删除的时候会按照约定自动转换为对应的外键名称：
+
+	$table->dropForeign(['user_id']);
+
+你可以在迁移文件里使用以下方法来开启或关闭外键约束：
+	
+	Schema::enableForeignKeyConstraints();
+	
+	Schema::disableForeignKeyConstraints();
+
+## 数据填充 ##
+
+Laravel 可以用 seed 类轻松地为数据库填充测试数据。所有的 seed 类都存放在 <u>database/seeds</u> 目录下。你可以任意为 seed 类命名，但是更应该遵守类似 UsersTableSeeder 的命名规范。Laravel 默认定义的一个 DatabaseSeeder 类。可以在这个类中使用 call 方法来运行其它的 seed 类从而控制数据填充的顺序。
+
+数据填充就是往数据库中写测试数据的操作。
+
+### 编写 Seeders ###
+
+运行 Artisan 命令 make:seeder 生成 Seeder。由框架生成的 seeders 都将被放置在 database/seeds 目录下：
+
+	php artisan make:seeder UsersTableSeeder（种子文件名）
+
+一个 seeder 类只包含一个默认方法：run。这个方法会在 Artisan 命令 db:seed 被执行时调用。在 run 方法里你可以根据需要在数据库中插入数据。你也可以用查询构造器 或 Eloquent 模型工场 来手动插入数据。
+
+<font color=red>**注：**在数据填充期间，批量赋值保护 会自动禁用。</font>
+
+如下所示，在默认的 DatabaseSeeder 类中的 run 方法中添加一条数据插入语句：
+
+	<?php
+	
+	use Illuminate\Database\Seeder;
+	use Illuminate\Support\Facades\DB;
+	
+	class DatabaseSeeder extends Seeder
+	{
+	    /**
+	     * 运行数据库填充。
+	     *
+	     * @return void
+	     */
+	    public function run()
+	    {
+	        DB::table('users')->insert([
+	            'name' => str_random(10),
+	            'email' => str_random(10).'@gmail.com',
+	            'password' => bcrypt('secret'),
+	        ]);
+	    }
+	}
+
+### 使用模型工厂 ###
+
+手动为每个模型填充指定属性很麻烦。作为替代方案，你可以使用 [model 工厂](https://learnku.com/docs/laravel/5.6/database-testing#writing-factories "model 工厂") 轻松地生成大量数据库数据。首先，阅读 [model 工厂文档](https://learnku.com/docs/laravel/5.6/database-testing#writing-factories "model 工厂文档") 来学习如何使用工厂，然后就可以使用 factory 这个辅助函数来向数据库中插入数据。
+
+例如，创建 50 个用户并为每个用户创建关联：
+
+	/**
+	 * 运行数据库填充。
+	 *
+	 * @return void
+	 */
+	public function run()
+	{
+	    factory(App\User::class, 50)->create()->each(function ($u) {
+	        $u->posts()->save(factory(App\Post::class)->make());
+	    });
+	}
+
+### 调用其它 Seeders ###
+
+在 DatabaseSeeder 类中，你可以使用 call 方法来运行其它的 seed 类。使用 call 方法可以将数据填充拆分成多个文件，这样就不会使单个 seeder 变得非常大。只需简单传递要运行的 seeder 类名称即可：
+
+	/**
+	 * 运行数据库 seeds。
+	 *
+	 * @return void
+	 */
+	public function run()
+	{
+	    $this->call([
+	        UsersTableSeeder::class,
+	        PostsTableSeeder::class,
+	        CommentsTableSeeder::class,
+	    ]);
+	}
+
+### 运行 Seeders ###
+
+完成 seeder 类的编写之后，你可能需要使用 dump-autoload 命令重新生成 Composer 的自动加载器：
+
+	composer dump-autoload
+
+接着就可以使用 Artisan 命令 db:seed 来填充数据库了。默认情况下，db:seed 命令将运行 DatabaseSeeder 类，这个类可以用来调用其它 Seed 类。不过，你也可以使用 --class 选项来指定一个特定的 seeder 类：
+
+	php artisan db:seed
+
+	php artisan db:seed --class=UsersTableSeeder
+
+你也可以使用 migrate:refresh 命令来填充数据库，该命令会回滚并重新运行所有迁移。这个命令可以用来重建数据库：
+
+	php artisan migrate:refresh --seed
