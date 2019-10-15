@@ -2334,3 +2334,16 @@ Eloquent 模型会触发许多事件，让你在模型的生命周期的多个�
 	        //
 	    }
 	}
+
+**方案一**
+
+官方方法：在AppServiceProvider中boot方法注册模型对应的观察者。
+
+![事件使用方法一](https://raw.githubusercontent.com/CayangPro/my_notes/master/Laravel/img/event-1.jpg)
+
+**方案二【推荐】**
+
+在本模型中去注册观察，修改时方便：
+
+
+
