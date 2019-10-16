@@ -2509,6 +2509,504 @@ Laravel 分页器结果类实现了 Illuminate\Contracts\Support\Jsonable 接口
 - $results->total() （使用 simplePaginate 时不可用）
 - $results->url($page)
 
+# Session
+
+Laravel 中的 session 默认存到文件中
+
+session 文件目录： <u>stroage\frameword\sessions</u>
+
+操作 session 的方法在 Laravel 中有2种方案，有类来操作也有利用辅助函数来操作：
+
+- Session 类操作
+- 辅助函数操作 session() 
+
+## 配置
+
+Session 的配置文件存储在 config/session.php 文件中。请务必查看此文件中对于你可用的选项。默认情况下，Laravel 配置了适用于大多数应用程序的 file Session 驱动。在生产环境下，你可以考虑使用 memcached 或 redis 驱动来实现更出色的 Session 性能。
+
+Session driver 的配置选项定义了每个请求存储 Session 数据的位置。Laravel 自带了几个不错且可开箱即用的驱动：
+
+- file - 将 Session 存储在 storage/framework/sessions 中。
+- cookie - Session 存储在安全加密的 cookie 中。
+- database - 将 Session 存储在数据库中。
+- memcached / redis - Session 存储在基于高速缓存的存储系统中。
+- array - Sessions 存储在 PHP 数组中，但不会被持久化。
+
+<font color=red>**提示:**数组驱动一般用于 测试 ，并防止存储在 Session 中的数据被持久化。</font>
+
+## 驱动程序先决条件
+
+### 数据库
+
+使用 database 作为 Session 驱动时，你需要创建一张包含 Session 各项数据的表。以下例子是使用 Schema 建表：
+
+	Schema::create('sessions', function ($table) {
+	    $table->string('id')->unique();
+	    $table->unsignedInteger('user_id')->nullable();
+	    $table->string('ip_address', 45)->nullable();
+	    $table->text('user_agent')->nullable();
+	    $table->text('payload');
+	    $table->integer('last_activity');
+	});
+
+你可以使用 Artisan 命令 session：table 来生成此迁移：
+
+	php artisan session:table
+
+	php artisan migrate
+
+### Redis
+
+Laravel 在使用 Redis 作为 Session 驱动之前，需要通过 Composer 安装 predis/predis 扩展包 (~1.0)。然后在 database 配置文件中配置 Redis 连接信息。在 session 配置文件中，connection 选项可用于指定 Session 使用哪个 Redis 连接。
+
+## 使用 Session
+
+### 获取数据
+
+Laravel 中处理 Session 数据有两种主要方法：全局辅助函数 session 和通过一个 Request 实例。首先，我们来看看通过控制器方法类型提示一个 Request 实例来访问 session。控制器方法依赖项会通过 Laravel 服务容器 实现自动注入:
+
+	<?php
+	
+	namespace App\Http\Controllers;
+	
+	use Illuminate\Http\Request;
+	use App\Http\Controllers\Controller;
+	
+	class UserController extends Controller
+	{
+	    /**
+	     * 展示给定用户的配置文件。
+	     *
+	     * @param  Request  $request
+	     * @param  int  $id
+	     * @return Response
+	     */
+	    public function show(Request $request, $id)
+	    {
+	        $value = $request->session()->get('key');
+	
+	        //
+	    }
+	}
+
+当你从 Session 获取值时，你还可以传递一个默认值作为 get 方法的第二个参数。如果 Session 中不存在指定的键，便会返回这个默认值。若传递一个闭包作为 get 方法的默认值，并且所请求的键并不存在时，get 方法将执行闭包并返回其结果：
+
+	$value = $request->session()->get('key', 'default');
+	
+	$value = $request->session()->get('key', function () {
+	    return 'default';
+	});
+
+#### 全局辅助函数 Session
+
+你也可以使用全局的 PHP 辅助函数 session 来获取和存储的 Session 数据。 使用单个字符串类型的值作为参数调用辅助函数 session 时，它会返回该字该符串对应的 Session 键的值。当使用一个键值对数组作为参数调用辅助函数 session 时，传入的键值将会存储在 Session 中：
+	
+	Route::get('home', function () {
+	    // 获取 session 中的一条数据...
+	    $value = session('key');
+	
+	    // 指定一个默认值...
+	    $value = session('key', 'default');
+	
+	    // 在 Session 中存储一条数据...
+	    session(['key' => 'value']);
+	});
+
+#### 获取所有的 Session 数据
+
+如果你想要获取所有的 Session 数据，可以使用 all 方法：
+
+	$data = $request->session()->all();
+
+#### 判断 Session 中是否存在某个值
+
+要确定 Session 中是否存在某个值，可以使用 has 方法。如果该值存在且不为 null，那么 has 方法会返回 true：
+
+	if ($request->session()->has('users')) {
+	    //
+	}
+
+要确定 Session 中是否存在某个值，即使其值为 null，也可以使用 exists 方法。如果值存在，则 exists 方法返回 true：
+
+	if ($request->session()->exists('users')) {
+	    //
+	}
+
+### 存储数据
+
+要存储数据到 Session，你可以使用 put 方法，或者使用辅助函数 session。
+
+	// 通过请求实例...
+	$request->session()->put('key', 'value');
+	
+	// 通过全局辅助函数...
+	session(['key' => 'value']);
+
+#### 在 Session 数组中保存数据
+
+push 方法可以将一个新的值添加到 Session 数组内。例如，假设 user.teams 这个键是包含团队名称的数组，你可以像这样将一个新的值加入到此数组中：
+
+	$request->session()->push('user.teams', 'developers');
+
+#### 检索 & 删除一个项目
+
+pull 方法可以只用一条语句就从 Session 中检索并且删除一个项目：
+
+	$value = $request->session()->pull('key', 'default');
+
+### 闪存数据
+
+有时候你仅想在下一个请求之前在 Session 中存入数据，你可以使用 flash 方法。使用这个方法保存在 Session 中的数据，只会保留到下个 HTTP 请求到来之前，然后就会被删除。闪存数据主要用于短期的状态消息：
+
+	$request->session()->flash('status', 'Task was successful!');
+
+如果需要给更多请求保留闪存数据，可以使用 reflash 方法，这将会所有的闪存数据保留给其它请求。如果只想保留特定的闪存数据，则可以使用 keep 方法：
+
+	$request->session()->reflash();
+	
+	$request->session()->keep(['username', 'email']);
+
+### 删除数据
+
+forget 方法可以从 Session 内删除一条数据。如果你想删除 Session 内所有数据，可以使用 flush 方法：
+
+	$request->session()->forget('key');
+	
+	$request->session()->flush();
+
+### 重新生成 Session ID
+
+重新生成 Session ID，通常是为了防止恶意用户利用 session fixation 对应用进行攻击。
+
+如果使用了内置函数 LoginController，Laravel 会自动重新生成身份验证中的 Session ID。否则，你需要手动使用 regenerate 方法重新生成 Session ID。
+
+	$request->session()->regenerate();
+
+## 添加自定义 Session 驱动
+
+### 实现驱动
+
+你自定义的 Session 驱动必须实现 SessionHandlerInterface 接口。这个接口包含了一些我们需要实现的简单方法。下面是一个大概的 MongoDB 实现流程示例：
+
+	<?php
+	
+	namespace App\Extensions;
+	
+	class MongoSessionHandler implements \SessionHandlerInterface
+	{
+	    public function open($savePath, $sessionName) {}
+	    public function close() {}
+	    public function read($sessionId) {}
+	    public function write($sessionId, $data) {}
+	    public function destroy($sessionId) {}
+	    public function gc($lifetime) {}
+	}
+
+<font color=red>**提示:**Laravel 默认没有附带扩展用的目录，你可以把它放在你喜欢的目录内。在下面这个例子中，我们创建了一个 Extensions 目录放置自定义的 MongoHandler 扩展。</font>
+
+接口中的这些方法不太容易理解。让我们来快速了解每个方法的作用：
+
+- open 方法通常用于基于文件的 Session 存储系统。因为 Laravel 已经附带了一个 file 的驱动，所以你不需要在该方法中放置任何代码。PHP 要求必需要有这个方法的实现（这只是一个糟糕的接口设计），你只需要把这个方法置空。
+- close 方法跟 open 方法很相似，通常也可以被忽略。对大多数的驱动而言，此方法不是必须的。
+- read 方法应当返回与给定的 $sessionId 相匹配的 Session 数据的字符串格式。在你的自定义的驱动中获取或存储 Session 数据时，不需要进行任何序列化或其它编码，因为 Laravel 会执行序列化。
+- write 将与 $sessionId 关联的给定的 $data 字符串写入到一些持久化存储系统，如 MongoDB、Dynamo 等。再次重申，你不需要进行任何序列化或其它编码，因为 Laravel 会自动处理这些事情。
+- destroy 方法会从持久化存储中移除与 $sessionId 相关联的数据
+- gc 方法能销毁给定的 $lifetime （UNIX 的时间戳）之前的所有数据。对本身拥有过期机制的系统如 Memcached 和 Redis 而言，该方法可以置空。
+
+### 注册驱动
+
+你的 Session 驱动实现之后，你还需要在框架中注册该驱动，即将该扩展驱动添加到 Laravel Session 后台。然后在 服务提供者 的 boot 方法内调用 Session Facade 的 extend 方法。之后你就可以从现有的 AppServiceProvider 或者新创建的提供器中执行此操作。
+
+	<?php
+	
+	namespace App\Providers;
+	
+	use App\Extensions\MongoSessionHandler;
+	use Illuminate\Support\Facades\Session;
+	use Illuminate\Support\ServiceProvider;
+	
+	class SessionServiceProvider extends ServiceProvider
+	{
+	    /**
+	     * 执行注册后引导服务。
+	     *
+	     * @return void
+	     */
+	    public function boot()
+	    {
+	        Session::extend('mongo', function ($app) {
+	            // Return implementation of SessionHandlerInterface...
+	            return new MongoSessionHandler;
+	        });
+	    }
+	
+	    /**
+	     * 在容器中注册绑定。
+	     *
+	     * @return void
+	     */
+	    public function register()
+	    {
+	        //
+	    }
+	}
+
+一旦 Session 驱动被注册，则必须在 config/session.php 的配置文件内使用 Mongo 驱动。
+
+# 中间件
+
+中间件作为请求与响应的中间人，它是一种过滤机制。
+
+Laravel 中间件提供了一种方便的机制来过滤进入应用的 HTTP 请求。例如，Laravel 内置了一个中间件来验证用户的身份认证。如果用户没有通过身份认证，中间件会将用户重定向到登录界面。但是，如果用户被认证，中间件将允许该请求进一步进入该应用。
+
+当然，除了身份认证以外，还可以编写另外的中间件来执行各种任务。例如：CORS 中间件可以负责为所有离开应用的响应添加合适的头部信息；日志中间件可以记录所有传入应用的请求。
+
+Laravel 自带了一些中间件，包括身份验证、CSRF 保护等。所有这些中间件都位于 <u>app/Http/Middleware</u> 目录。
+
+## 定义中间件
+
+通过运行 “make:middleware 中间件名称” 命令来创建新的中间件：
+
+	php artisan make:middleware CheckAge
+
+该命令将会在 app/Http/Middleware 目录下创建一个新的 CheckAge 类，在这个中间件中，我们仅允许 age 参数大于 200 的请求对此路由进行访问，否则，我们将此用户重定向到 home 。
 
 
+	<?php
+	
+	namespace App\Http\Middleware;
+	
+	use Closure;
+	
+	class CheckAge
+	{
+	    /**
+	     * 处理传入的请求
+	     *
+	     * @param  \Illuminate\Http\Request  $request
+	     * @param  \Closure  $next
+	     * @return mixed
+	     */
+	    public function handle($request, Closure $next)
+	    {
+	        if ($request->age <= 200) {
+	            return redirect('home');
+	        }
+	
+	        return $next($request);
+	    }
+	}
 
+正如你所见，假如给定的 age 参数小于或等于 200 ，这个中间件将返回一个 HTTP 重定向到客户端；否则，请求将进一步传递到应用中。要让请求继续传递到应用程序中（即允许「通过」中间件验证的），只需使用 $request 作为参数去调用回调函数 $next 。
+
+最好将中间件想象为一系列 HTTP 请求必须经过才能进入你应用的「层」。每一层都会检查请求（是否符合某些条件），（如果不符合）甚至可以（在请求访问你的应用之前）完全拒绝掉。
+
+### 前置 & 后置中间件
+
+中间件是在请求之前或之后运行取决于中间件本身。例如，接下来的这个中间件将在应用处理请求 之前 执行其任务：
+
+	<?php
+	
+	namespace App\Http\Middleware;
+	
+	use Closure;
+	
+	class BeforeMiddleware
+	{
+	    public function handle($request, Closure $next)
+	    {
+	        // Perform action
+	
+	        return $next($request);
+	    }
+	}
+
+而接下来的这个中间件将在应用处理请求 之后 执行其任务：
+
+	<?php
+	
+	namespace App\Http\Middleware;
+	
+	use Closure;
+	
+	class AfterMiddleware
+	{
+	    public function handle($request, Closure $next)
+	    {
+	        $response = $next($request);
+	
+	        // 执行操作
+	
+	        return $response;
+	    }
+	}
+
+## 注册中间件
+
+在 Laravel 中有两种类型的中间件，即：**全局中间件**和**路由中间件**
+
+- 全局中间件将在应用程序的每个 HTTP 请求运行而路由中间件将被分配到一个特定的路由。
+- 中间件可在 <u>app/Http/kernel.php</u> 中注册，该文件包含两个属性： $middleware 和 $routeMiddleware，$middleware 属性用于注册全局中间件， $routeMiddelware 属性用于注册指定的路由中间件。
+
+### 全局中间件
+
+假设你想让中间件在应用处理每个 HTTP 请求期间运行，只需要在 app/Http/Kernel.php 中的 $middleware 属性中列出这个中间件
+
+
+### 为路由分配中间件
+
+假设你想为指定的路由分配中间件，首先应该在 app/Http/Kernel.php 文件内为该中间件分配一个 键 。默认情况下， Kernel 类的 $routeMiddleware 属性下包含了 Laravel 内置的中间件。若要加入自定义的中间件，只需把它附加到列表后并为其分配一个自定义 键 即可。例如：
+
+	// 在 App\Http\Kernel 类中
+	
+	protected $routeMiddleware = [
+	    'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+	    'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+	    'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+	    'can' => \Illuminate\Auth\Middleware\Authorize::class,
+	    'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+	    'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+	];
+
+一旦在 Kernel 类中定义好了中间件，就可以通过 middleware 方法将为路由分配中间件：
+
+	Route::get('admin/profile', function () {
+	    //
+	})->middleware('auth');
+
+你也可以为路由分配多个中间件：
+
+	Route::get('/', function () {
+	    //
+	})->middleware('first', 'second');
+
+分配中间件时，你还可以传递完整的类名：
+
+	use App\Http\Middleware\CheckAge;
+	
+	Route::get('admin/profile', function () {
+	    //
+	})->middleware(CheckAge::class);
+
+
+## 中间件组
+
+某些时候你可能希望使用一个 key 把多个中间件打包成一个组，方便将他们应用到路由中。你可以使用 Http kernel 的 $middlewareGroups 属性。
+
+Laravel 内置了 web 和 api 两个中间件组，它们包含了常用的中间件，你可能会想应用到 web UI 和 API 路由中：
+
+	/**
+	 * 应用程序的路由中间件组
+	 *
+	 * @var array
+	 */
+	protected $middlewareGroups = [
+	    'web' => [
+	        \App\Http\Middleware\EncryptCookies::class,
+	        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+	        \Illuminate\Session\Middleware\StartSession::class,
+	        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+	        \App\Http\Middleware\VerifyCsrfToken::class,
+	        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+	    ],
+	
+	    'api' => [
+	        'throttle:60,1',
+	        'auth:api',
+	    ],
+	];
+
+
+中间件组和单个中间件一样可以被应用到路由和控制器行为中。同时，中间组很方便得将多个中间件一次性应用到路由上：
+
+	Route::get('/', function () {
+	    //
+	})->middleware('web');
+	
+	Route::group(['middleware' => ['web']], function () {
+	    Route::get('user','UserController@index')->name('user);
+	});
+
+<font color=red>**提示：**RouteServiceProvider 将 web 中间组自动应用到 routes/web.php </font>
+
+**控制器中使用中间件**
+
+	<?php
+	
+	namespace App\Http\Controllers;
+	
+	use Illuminate\Http\Request;
+	
+	class ArticleController extends Controller
+	{
+	    public function __construct()
+	    {
+	        return $this->middleware('checkAge');
+			// ->except(['index']) 黑名单 写了就不给它进行中间件过滤
+			//retruen $this->middleware(['checkAge'])->except(['index']);
+	    }
+	}
+
+## 中间件参数
+
+中间件也可以接受额外的参数。举个例子，假如你的应用需要在执行特定操作之前验证用户是否为给定的 「角色」，你可以通过创建一个 CheckRole 中间件，由它来接收「角色」名称作为附加参数。
+
+附加的中间件参数应该在 $next 参数之后被传递：
+
+	<?php
+	
+	namespace App\Http\Middleware;
+	
+	use Closure;
+	
+	class CheckRole
+	{
+	    /**
+	     * 处理传入的参数
+	     *
+	     * @param  \Illuminate\Http\Request  $request
+	     * @param  \Closure  $next
+	     * @param  string  $role
+	     * @return mixed
+	     */
+	    public function handle($request, Closure $next, $role)
+	    {
+	        if (! $request->user()->hasRole($role)) {
+	            // 重定向
+	        }
+	
+	        return $next($request);
+    }
+
+定义路由时通过一个 **:** 来隔开中间件名称和参数来指定中间件参数。多个参数就使用逗号分隔：
+
+	Route::put('post/{id}', function ($id) {
+	    //
+	})->middleware('role:editor');
+
+## Terminable 中间件
+
+有时中间件可能需要在 HTTP 响应发送到浏览器之后处理一些工作。比如，Laravel 内置的「session」中间件会在响应发送到浏览器之后将会话数据写入存储器中。如果你在中间件中定义一个 terminate 方法，则会在响应发送到浏览器后自动调用：
+
+	<?php
+	
+	namespace Illuminate\Session\Middleware;
+	
+	use Closure;
+	
+	class StartSession
+	{
+	    public function handle($request, Closure $next)
+	    {
+	        return $next($request);
+	    }
+	
+	    public function terminate($request, $response)
+	    {
+	        // Store the session data...
+	    }
+	}
+
+terminate 方法应该同时接收请求和响应。一旦定义了这个中间件，你应该将它添加到路由列表或 app/Http/Kernel.php 文件的全局中间件中。
+
+在你的中间件上调用 terminate 调用时，Laravel 会从服务容器 中解析出一个新的中间件实例。如果要在调用 handle 和 terminate 方法时使用同一个中间件实例，就使用容器的 singleton 方法向容器注册中间件。
