@@ -3010,3 +3010,201 @@ Laravel 内置了 web 和 api 两个中间件组，它们包含了常用的中�
 terminate 方法应该同时接收请求和响应。一旦定义了这个中间件，你应该将它添加到路由列表或 app/Http/Kernel.php 文件的全局中间件中。
 
 在你的中间件上调用 terminate 调用时，Laravel 会从服务容器 中解析出一个新的中间件实例。如果要在调用 handle 和 terminate 方法时使用同一个中间件实例，就使用容器的 singleton 方法向容器注册中间件。
+
+# 缓存
+
+## 配置
+
+Laravel 为各种后端缓存提供丰富而统一的 API，而其配置信息位于 config/cache.php 文件中，你可以指定默认的缓存驱动程序。Laravel 支持当前流行的后端缓存，例如 Memcached 和 Redis。
+
+缓存配置文件还包含各种其他选项，这些选项都记录在文件中，因此请确保阅读这些选项。 默认情况下，Laravel 配置为使用 file 缓存驱动程序，它将序列化的缓存对象存储在文件系统中。 对于较大的应用程序，建议您使用更强大的驱动程序，例如 Memcached 或 Redis。 你甚至可以为同一个驱动程序配置多个缓存配置。
+
+- .env 文件配置，推荐修改这里
+- config/cache.php 文件，不建议直接修改
+
+默认 laravel 支持的缓存介质：apc, array, file, memached,redis，默认使用files 
+
+
+## 驱动的前提条件
+
+### 数据库
+
+当使用 database 缓存驱动时，你需要配置一个表来存放缓存数据，下面是构建缓存数据表结构的 Schema 声明示例：
+
+	Schema::create('cache', function ($table) {
+	    $table->string('key')->unique();
+	    $table->text('value');
+	    $table->integer('expiration');
+	});
+
+<font color=red>**提示：**你也可以使用 Artisan 命令 php artisan cache:table 来生成合适的迁移。</font>
+
+### Memcached
+
+使用 Memcached 驱动需要安装 Memcached PECL 扩展包 。你可以把所有 Memcached 服务器都列在 config/cache.php 配置文件中：
+
+	'memcached' => [
+	    [
+	        'host' => '127.0.0.1',
+	        'port' => 11211,
+	        'weight' => 100
+	    ],
+	],
+
+你可以将 host 选项设置为 UNIX 的 socket 路径。如果你这样配置了，记得 port 选项应该设置为 0:
+
+	'memcached' => [
+	    [
+	        'host' => '/var/run/memcached/memcached.sock',
+	        'port' => 0,
+	        'weight' => 100
+	    ],
+	],
+
+### Redis
+
+在使用 Laravel 的 Redis 缓存之前，你需要通过 Composer 安装 predis/predis 扩展包 (~1.0) 或者使用 PECL 安装 PhpRedis PHP 拓展。
+
+如需了解更多配置 Redis 的信息，请参考 Laravel Redis 文档。
+
+## 缓存的使用
+
+### 获取缓存实例
+
+Illuminate\Contracts\Cache\Factory 和 Illuminate\Contracts\Cache\Repository 契约提供了 Laravel 缓存服务的访问机制。 Factory 契约为你的应用程序定义了访问所有缓存驱动的机制。 Repository 契约通常是由 cache 配置文件指定的默认缓存驱动实现的。
+
+不过，你也可以使用 Cache Facade，我们将在后续的文档中介绍。Cache Facade 为 Laravel 缓存契约底层的实现提供了方便又简洁的方法：
+
+	<?php
+	
+	namespace App\Http\Controllers;
+	
+	use Illuminate\Support\Facades\Cache;
+	
+	class UserController extends Controller
+	{
+	    /**
+	     * 显示应用程序的所有用户的列表。
+	     *
+	     * @return Response
+	     */
+	    public function index()
+	    {
+	        $value = Cache::get('key');
+	
+	        //
+	    }
+	}
+
+#### 访问多个缓存存储
+
+使用 Cache Facade，你可以通过 store 方法来访问各种缓存存储。 传入 store 方法的键应该对应 cache 配置信息文件中的 stores 配置数组中所列的存储之一：
+
+	$value = Cache::store('file')->get('foo');
+	
+	Cache::store('redis')->put('bar', 'baz', 10);
+
+### 从缓存中获取数据
+
+Cache Facade 中的 get 方法是用来从缓存中获取数据的方法。如果该数据不存在于缓存中，则该方法返回 null。你也可以向 get 方法传递第二个参数，用来指定如果查找的数据不存在时，你希望返回的默认值：
+
+	$value = Cache::get('key');
+	
+	$value = Cache::get('key', 'default');
+
+你甚至可以传递 Closure 作为默认值。如果指定的数据不存在于缓存中，将返回 Closure 的结果。传递闭包的方法可以允许你从数据库或其他外部服务中获取默认值：
+
+	$value = Cache::get('key', function () {
+	    return DB::table(...)->get();
+	});
+
+#### 确认项目是否存在
+
+has 方法可用于确定缓存中是否存在项目。如果值为 null 或 false，则此方法将返回 false：
+
+	if (Cache::has('key')) {
+	    //
+	}
+
+#### 递增与递减值
+
+increment 和 decrement 方法可以用来调整高速缓存中整数项的值。这两个方法都可以传入第二个可选参数，用来指示要递增或递减值的数量：
+
+	Cache::increment('key');
+	Cache::increment('key', $amount);
+	Cache::decrement('key');
+	Cache::decrement('key', $amount);
+
+#### 获取和存储
+
+有时你可能想从缓存中找出一个数据，而当在请求的数据不存在时，程序能为你存储默认值。例如，你可能会想从缓存中取出所有用户，如果缓存中不存在用户数据时，就从数据库中将这些用户取出并放入缓存中。你可以使用 Cache::remember 方法来做到这一点：
+
+	$value = Cache::remember('users', $minutes, function () {
+	    return DB::table('users')->get();
+	});
+
+如果缓存中不存在你想找的数据，则传递给 remember 方法的 Closure 将被执行，然后将其结果返回并放置在缓存中。
+
+你还可以使用 rememberForever 方法从缓存中查找数据或永久存储它：
+
+	$value = Cache::rememberForever('users', function() {
+	    return DB::table('users')->get();
+	});
+
+#### 获取和删除
+
+如果你需要从缓存中获取到数据之后再删除它，你可以使用 pull 方法。和 get 方法一样，如果缓存中不存在该数据， 则返回 null :
+
+	$value = Cache::pull('key');
+
+### 在缓存中存储数据
+
+你可以使用 Cache Facade 的 put 方法来将数据存储到缓存中。当你在缓存中存放数据时，你需要使用第三个参数来设定缓存的过期时间：
+
+	Cache::put('key', 'value', $minutes);
+
+除了以整数形式传递过期的分钟数，还可以传递一个 DateTime 实例来表示该数据的过期时间：
+
+	$expiresAt = now()->addMinutes(10);
+
+	Cache::put('key', 'value', $expiresAt);
+
+#### 只存储没有的数据
+
+add 方法将不存在于缓存中的数据放入缓存中，如果存放成功返回 true ，否则返回 false ：
+
+	Cache::add('key', 'value', $minutes);
+
+#### 数据永久存储
+
+forever 方法可以用来将数据永久存入缓存中。因为这些缓存数据不会过期，所以必须通过 forget 方法从缓存中手动删除它们：
+
+	Cache::forever('key', 'value');
+
+<font color=red>**提示：**如果你使用 Memcached 驱动，那么当缓存数量达到其大小限制时，可能会删除「永久」存储的数据。</font>
+
+### 删除缓存中的数据
+
+你可以使用 forget 方法从缓存中删除数据：
+
+	Cache::forget('key');
+
+你也可以使用 flush 方法清空所有缓存：
+
+	Cache::flush();
+
+<font color=red>**提示：**清空缓存的方法并不会考虑缓存前缀，会将缓存中所有的内容删除。因此在清除与其它应用程序共享的缓存时请谨慎考虑。</font>
+
+## cache() 辅助函数
+
+除了可以使用 Cache Facade 或者 Cache 契约 之外，你也可以使用全局帮助函数 cache 来获取和保存缓存数据。当 cache 只接收一个字符串参数的时候，它将会返回给定键对应的值：
+
+	$value = cache('key');
+
+如果你向函数提供了一组键值对和到期时间，它会在指定时间内在缓存中存储数据：
+
+	cache(['key' => 'value'], $minutes);
+	
+	cache(['key' => 'value'], now()->addSeconds(10));
+
+<font color=red>**提示：**如果在测试中使用全局函数 cache，可以使用 Cache::shouldReceive 方法，就像正在测试 Facade 一样。</font>
