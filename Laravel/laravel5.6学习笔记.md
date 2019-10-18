@@ -2520,7 +2520,7 @@ session 文件目录： <u>stroage\framework\sessions</u>
 - Session 类操作
 - 辅助函数操作 session() 
 
-## 配置
+## Session配置
 
 Session 的配置文件存储在 config/session.php 文件中。请务必查看此文件中对于你可用的选项。默认情况下，Laravel 配置了适用于大多数应用程序的 file Session 驱动。在生产环境下，你可以考虑使用 memcached 或 redis 驱动来实现更出色的 Session 性能。
 
@@ -3013,7 +3013,7 @@ terminate 方法应该同时接收请求和响应。一旦定义了这个中间�
 
 # 缓存
 
-## 配置
+## 缓存配置
 
 Laravel 为各种后端缓存提供丰富而统一的 API，而其配置信息位于 config/cache.php 文件中，你可以指定默认的缓存驱动程序。Laravel 支持当前流行的后端缓存，例如 Memcached 和 Redis。
 
@@ -3022,7 +3022,7 @@ Laravel 为各种后端缓存提供丰富而统一的 API，而其配置信息�
 - .env 文件配置，推荐修改这里
 - config/cache.php 文件，不建议直接修改
 
-默认 laravel 支持的缓存介质：apc, array, file, memached,redis，默认使用files 
+默认 laravel 支持的缓存介质：apc, array, file, memached,redis，默认使用file
 
 
 ## 驱动的前提条件
@@ -3066,6 +3066,10 @@ Laravel 为各种后端缓存提供丰富而统一的 API，而其配置信息�
 在使用 Laravel 的 Redis 缓存之前，你需要通过 Composer 安装 predis/predis 扩展包 (~1.0) 或者使用 PECL 安装 PhpRedis PHP 拓展。
 
 如需了解更多配置 Redis 的信息，请参考 Laravel Redis 文档。
+
+1. 安装 Laravel 支持的 redis 扩展:`composer require predis/predis`
+2. 在 .env 文件中配置缓存为redis和redis连接相关配置
+3. <font color=red>**开启 redis 服务**</font>
 
 ## 缓存的使用
 
@@ -3208,3 +3212,231 @@ forever 方法可以用来将数据永久存入缓存中。因为这些缓存数
 	cache(['key' => 'value'], now()->addSeconds(10));
 
 <font color=red>**提示：**如果在测试中使用全局函数 cache，可以使用 Cache::shouldReceive 方法，就像正在测试 Facade 一样。</font>
+
+# 文件上传
+
+在 Laravel 中实现文件上传是非常简单的，不用引入第三方类库，直接通过 Request 对象就可以获取到文件资源后进行保存。
+
+	// 获取上传文件的 $_FILES[文件域表单名称]
+	$file = $request->file('文件表单名称');
+
+	// 验证文件是否存在
+	$request->hasFile('文件表单名称');
+
+	// 获取上传文件的后缀 ,clientExtension
+	$request->file('文件表单名称')->getClientOriginalExtension();
+	// Or
+	$request->file('文件表单名称')->clientOriginalExtension();
+
+	// 将文件移动到服务器指定位置 上传方式1
+	$request->file('文件表单名称')->move(路径，文件名);
+
+# auth登录
+
+1.登录的相关模型中继承User模型：
+
+	<?php
+
+	namespace App\Models;
+	
+	use Illuminate\Database\Eloquent\Model;
+	// 使用 User 模型
+	use Illuminate\Foundation\Auth\User as Authorization;
+	//引入Hash门面
+	use Hash;
+
+	class User extends Authorization
+	{
+	    //黑名单
+	    protected $guarded = [];
+	
+	    /**
+	     * 用户登录
+	     *
+	     */
+	    public function login(array $data)
+	    {
+	        //更具用户名查找用户名是否存在
+	        $info = self::where('username',$data['username'])->first();
+	        if(!$info){
+	            return false;
+	        }
+	        // php5以后提供用于生成密码的hash比md5更安全，在laravel只需引入Hash就可以使用
+	        //  Hash::check($data['password'],$info['password'])
+	        //密码不正确
+	        if(!Hash::check($data['password'],$info['password'])){
+	            return false;
+	        }
+	        //写入session
+	        session(['admin.user' => $info]);
+	        return true;
+	
+	    }
+	
+	}
+2. 控制器中引入 Auth 用户登录验证门面：`use Auth;`
+3. 在config/auth.php中，找到 providers 中的 users ,将其中的 model 的建值设为你用来登录使用的模型，如下所示：
+
+		'providers' => [
+	        'users' => [
+	            'driver' => 'eloquent',
+	            'model' => App\Models\User::class,
+	        ],
+	    ],
+
+	
+4. 登录控制器中，使用 Auth 验证：
+	
+		<?php
+	
+		namespace App\Http\Controllers\Admin;
+		
+		use App\Http\Requests\LoginRequest;
+		use App\Models\User;
+		use Illuminate\Http\Request;
+		use App\Http\Controllers\Controller;
+		//引入 Auth 用户登录验证门面
+		use Auth;
+		class LoginController extends Controller
+		{	
+		    //登录处理
+		    public function login(LoginRequest $request)
+		    {
+		
+		        //登录成功返回ture，否则返回false
+		        $user = Auth::attempt($request->only(['username','password']));
+		        // or
+		        $user = auth()->attempt($request->only(['username','password']));
+		        
+		    }
+		}
+
+<font color=red>**注：使用auth登录验证时，密码字段必须是:password**</font>
+
+
+# 多表关系关联模型
+
+数据库表通常相互关联。 例如，一篇博客文章可能有许多评论，或者一个订单对应一个下单用户。Eloquent 让这些关联的管理和使用变得简单，并支持多种类型的关联：
+
+- 一对一
+- 一对多
+- 多对多
+- 远程一对多
+- 多态关联
+- 多对多多态关联
+
+## 定义关联
+
+Eloquent 关联在 Eloquent 模型类中以方法的形式呈现。如同 Eloquent 模型本身，关联也可以作为强大的 查询语句构造器 使用，提供了强大的链式调用和查询功能。例如，我们可以在 posts 关联的链式调用中附加一个约束条件：
+
+	$user->posts()->where('active', 1)->get();
+
+不过，在深入使用关联之前，让我们先学习如何定义每种关联类型。
+
+## 一对一
+
+一对一关联是最基本的关联关系。例如，一个 User 模型可能关联一个 Phone 模型。为了定义这个关联，我们要在 User 模型中写一个 phone 方法，在 phone 方法内部调用 hasOne 方法并返回其结果：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class User extends Model
+	{
+	    /**
+	     * 获取与用户关联的电话号码记录。
+	     */
+	    public function phone()
+	    {
+	        return $this->hasOne('App\Phone');
+	    }
+	}
+
+hasOne 方法的第一个参数是关联模型的类名。一旦定义了模型关联，我们就可以使用 Eloquent 动态属性获得相关的记录。动态属性允许你访问关系方法就像访问模型中定义的属性一样：
+
+	$phone = User::find(1)->phone;
+
+Eloquent 会基于模型名决定外键名称。在这个列子中， 会自动假设 Phone 模型有一个 user_id 的外键。如果你想覆盖这个约定，可以传递第二个参数给 hasOne 方法：
+
+	return $this->hasOne('App\Phone', 'foreign_key');
+
+另外，Eloquent 假设外键的值是与父级 id（或自定义 $primaryKey）列的值相匹配的 。换句话说，Eloquent 将会在 Phone 记录的 user_id 列中查找与用户表的 id 列相匹配的值。 如果您希望该关联使用 id 以外的自定义键名，则可以给 hasOne 方法传递第三个参数：
+
+	return $this->hasOne('App\Phone', 'foreign_key', 'local_key');
+
+### 定义反向关联
+
+我们已经能从 User 模型访问到 Phone 模型了。现在，让我们再在 Phone 模型上定义一个关联，这个关联能让我们访问到拥有该电话的 User 模型。我们可以使用与 hasOne 方法对应的 belongsTo 方法来定义反向关联：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Phone extends Model
+	{
+	    /**
+	     * 获得拥有此电话的用户。
+	     */
+	    public function user()
+	    {
+	        return $this->belongsTo('App\User');
+	    }
+	}
+
+在上面的例子中，Eloquent 会尝试匹配 Phone 模型上的 user_id 至 User 模型上的 id。它是通过检查关系方法的名称并使用 _id 作为后缀名来确定默认外键名称的。但是，如果 Phone 模型的外键不是 user_id，那么可以将自定义键名作为第二个参数传递给 belongsTo 方法：
+
+	/**
+	 * 获得拥有此电话的用户。
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User', 'foreign_key');
+	}
+
+如果父级模型没有使用 id 作为主键，或者是希望用不同的字段来连接子级模型，则可以通过给 belongsTo 方法传递第三个参数的形式指定父级数据表的自定义键：
+
+	/**
+	 * 获得拥有此电话的用户。
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User', 'foreign_key', 'other_key');
+	}
+
+### 默认模型
+
+belongsTo 关联允许定义默认模型，这适应于当关联结果返回的是 null 的情况。这种设计模式通常称为 空对象模式，为您免去了额外的条件判断代码。在下面的例子中，user 关联如果没有找到文章的作者，就会返回一个空的 App\User 模型。
+
+	/**
+	 * 获得此文章的作者。
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User')->withDefault();
+	}
+
+您也可以通过传递数组或闭包给 withDefault 方法，已填充默认模型的属性：
+
+	/**
+	 * 获得此文章的作者。
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User')->withDefault([
+	        'name' => '游客',
+	    ]);
+	}
+	
+	/**
+	 * 获得此文章的作者。
+	 */
+	public function user()
+	{
+	    return $this->belongsTo('App\User')->withDefault(function ($user) {
+	        $user->name = '游客';
+	    });
+	}
