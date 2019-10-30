@@ -1,5 +1,7 @@
 <font size=6>**Laravle5.6学习笔记**</font>
 
+这只是一个 Laravel5.6 框架快速入门学习的笔记，旨在快速了解和使用 Laravel5.6 框架，更多关于框架的详细知识点请查看 [Laravle5.6-官当文档](https://learnku.com/docs/laravel/5.6/)。
+
 # 安装
 
 ## 通过composer安装
@@ -12,6 +14,25 @@
 2. 项目中执行 composer require barryvdh/laravel-debugbar
 3. 在config/app.php加入： `Barryvdh\Debugbar\ServiceProvider::class，`
 4. 线上时注释掉第三步的代码
+
+## laravel-ide-helper
+
+laravel-ide-helper 用于实现方便的代码提示功能，详细查看插件官网
+
+### 使用composer安装插件
+
+	composer require --dev barryvdh/laravel-ide-helper
+
+生成代码跟踪支持
+
+	php artisan ide-helper:generate
+
+## 其他插件
+
+在 IDE 中设置中搜索插件 Preferences | Plugins需要安装的插件列表如下：
+
+- Laravel Plugin
+- Laravel Snippets
 
 
 # 目录结构
@@ -129,9 +150,23 @@ api项目路由位置： 项目目录 <u>/routes/api.php</u>
 	    dump($_SERVER);
 	});
 
+### 重定向路由
+
+如果要定义重定向到另一个 URI 的路由，可以使用 Route::redirect 方法。这个方法可以快速的实现重定向，而不再需要去定义完整的路由或者控制器:
+
+	Route::redirect('/here', '/there', 301);
+
+### 视图路由
+
+如果你的路由只需要返回一个视图，可以使用 Route::view 方法。它和 redirect 一样方便，不需要定义完整的路由或控制器。view 方法有三个参数，其中前两个是必填参数，分别是 URI 和视图名称。第三个参数选填，可以传入一个数组，数组中的数据会被传递给视图:
+
+	Route::view('/welcome', 'welcome');
+	
+	Route::view('/welcome', 'welcome', ['name' => 'Taylor']);
+
 ## 路由参数
 
-### 参数必填
+### 必填参数
 
 Route::get('URI/<font color=red>{参数名称}</font>','闭包或控制器相应方法标识');
 
@@ -139,7 +174,7 @@ Route::get('URI/<font color=red>{参数名称}</font>','闭包或控制器相应
 	    echo '文章id:'.$id;
 	});
 
-### 参数可选
+### 可选参数
 
 Route::get('URI/<font color=red>{参数名称?}</font>','闭包或控制器相应方法标识');
 
@@ -159,6 +194,30 @@ Route::get('URI/<font color=red>{参数名称}</font>','闭包或控制器相应
 	Route::get('article/{id}',function (int $id){
 	    echo '文章id:'.$id;
 	});
+
+
+### 全局约束
+
+如果你希望某个具体的路由参数都遵循同一个正则表达式的约束，就使用 pattern 方法在 RouteServiceProvider 的 boot 方法中定义这些模式：
+
+	/**
+	 * 定义你的路由模型绑定, pattern 过滤器等。
+	 *
+	 * @return void
+	 */
+	public function boot()
+	{
+	    Route::pattern('id', '[0-9]+');
+	
+	    parent::boot();
+	}
+
+一旦定义好之后，便会自动应用这些规则到所有使用该参数名称的路由上：
+	
+	Route::get('user/{id}', function ($id) {
+	    // Only executed if {id} is numeric...
+	});
+
 
 ## 路由别名【掌握】
 
@@ -240,11 +299,62 @@ Route::get('URI','闭包或控制器相应方法标识')<font color=red>->name('
 		Route::get('user','UserController@index')->name('user.center');	
 	});
 
+
+### 子域名路由
+
+路由组也可以用来处理子域名。子域名可以像路由 URI 一样被分配路由参数，允许你获取一部分子域名作为参数给路由或控制器使用。可以在 group 之前调用 domain 方法来指定子域名：
+
+	Route::domain('{account}.myapp.com')->group(function () {
+	    Route::get('user/{id}', function ($account, $id) {
+	        //
+	    });
+	});
+
+### 路由名称前缀
+
+name 方法可以用来给路由组中的每个路由名称添加一个给定的字符串。 例如，您可能希望以 「admin」为所有分组路由的名称加前缀。 给定的字符串与指定的路由名称前缀完全相同，因此我们将确保在前缀中提供尾部的 . 字符：
+
+	Route::name('admin.')->group(function () {
+	    Route::get('users', function () {
+	        // 路由分配名称“admin.users”...
+	    })->name('users');
+	});
+
+
 ## 查看定义好的路由
 
 	php artisan route:list
 
 ![查看已定义路由](https://raw.githubusercontent.com/CayangPro/my_notes/master/Laravel/img/route-3.jpg "查看已定义路由")
+
+
+## 访问当前路由
+
+你可以使用 Route Facade 上的 current、currentRouteName 和 currentRouteAction 方法来访问处理传入请求的路由的信息：
+
+	$route = Route::current();
+	
+	$name = Route::currentRouteName();
+	
+	$action = Route::currentRouteAction();
+
+
+# 表单方法伪造
+
+HTML 表单不支持 PUT、PATCH 或 DELETE 行为。所以当你要从 HTML 表单中调用定义了 PUT、PATCH 或 DELETE 路由时，你将需要在表单中增加隐藏的 _method 输入标签。使用 _method 字段的值作为 HTTP 的请求方法：
+
+	<form action="/foo/bar" method="POST">
+	    <input type="hidden" name="_method" value="PUT">
+	    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+	</form>
+
+你也可以使用 @method Blade 指令生成 _method 输入：
+
+	<form action="/foo/bar" method="POST">
+	    @method('PUT')
+	    @csrf
+	</form>
+
 
 # 控制器
 
@@ -3314,7 +3424,7 @@ forever 方法可以用来将数据永久存入缓存中。因为这些缓存数
 <font color=red>**注：使用auth登录验证时，密码字段必须是:password**</font>
 
 
-# 多表关系关联模型
+# 模型关联
 
 数据库表通常相互关联。 例如，一篇博客文章可能有许多评论，或者一个订单对应一个下单用户。Eloquent 让这些关联的管理和使用变得简单，并支持多种类型的关联：
 
@@ -3364,6 +3474,7 @@ Eloquent 会基于模型名决定外键名称。在这个列子中， 会自动�
 
 另外，Eloquent 假设外键的值是与父级 id（或自定义 $primaryKey）列的值相匹配的 。换句话说，Eloquent 将会在 Phone 记录的 user_id 列中查找与用户表的 id 列相匹配的值。 如果您希望该关联使用 id 以外的自定义键名，则可以给 hasOne 方法传递第三个参数：
 
+	// return $this->hasOne(关联model, 关联model的联系键, 本model的联系键);
 	return $this->hasOne('App\Phone', 'foreign_key', 'local_key');
 
 ### 定义反向关联
@@ -3404,6 +3515,7 @@ Eloquent 会基于模型名决定外键名称。在这个列子中， 会自动�
 	 */
 	public function user()
 	{
+		// return $this->belongsTo(关联model, 关联model的联系键, 父model的联系键);
 	    return $this->belongsTo('App\User', 'foreign_key', 'other_key');
 	}
 
@@ -3440,3 +3552,415 @@ belongsTo 关联允许定义默认模型，这适应于当关联结果返回的�
 	        $user->name = '游客';
 	    });
 	}
+
+## 一对多 
+
+一对多 关联用于定义单个模型拥有任意数量的其它关联模型。例如，一篇博客文章可能会有无限多条评论。就像其它的 Eloquent 关联一样，一对多关联的定义也是在 Eloquent 模型中写一个方法：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Post extends Model
+	{
+	    /**
+	     * 获得此博客文章的评论。
+	     */
+	    public function comments()
+	    {
+	        return $this->hasMany('App\Comment');
+	    }
+	}
+
+记住，Eloquent 会自动确定 Comment 模型上正确的外键字段。按照约定，Eloquent 使用父级模型名的「snake case」形式、加上 _id 后缀名作为外键字段。对应到上面的场景，就是 Eloquent 假定 Comment 模型对应到 Post 模型上的那个外键字段是 post_id。
+
+关联关系定义好后，我们就可以通过访问 comments 属性获得评论集合。记住，因为 Eloquent 提供了「动态属性」，所以我们可以像在访问模型中定义的属性一样，访问关联方法：
+
+	$comments = App\Post::find(1)->comments;
+	
+	foreach ($comments as $comment) {
+	    //
+	}
+
+当然，由于所有的关联还可以作为查询语句构造器使用，因此你可以使用链式调用的方式、在 comments 方法上添加额外的约束条件：
+
+	$comments = App\Post::find(1)->comments()->where('title', 'foo')->first();
+
+形如 hasOne 方法，您也可以在使用 hasMany 方法的时候，通过传递额外参数来覆盖默认使用的外键与本地键。
+
+	return $this->hasMany('App\Comment', 'foreign_key');
+	
+	// return $this->belongsTo(关联model, 关联model的联系键, 本model的联系键);	
+	return $this->hasMany('App\Comment', 'foreign_key', 'local_key');
+
+### 一对多（反向）
+
+现在，我们已经能获得一篇文章的所有评论，接着再定义一个通过评论获得所属文章的关联。这个关联是 hasMany 关联的反向关联，在子级模型中使用 belongsTo 方法定义它：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Comment extends Model
+	{
+	    /**
+	     * 获得此评论所属的文章。
+	     */
+	    public function post()
+	    {
+	        return $this->belongsTo('App\Post');
+	    }
+	}
+
+关联关系定义好后，我们就可以在 Comment 模型上使用 post 「动态属性」获得 Post 模型了。
+
+	$comment = App\Comment::find(1);
+
+	echo $comment->post->title;
+
+在上面的例子中，Eloquent 会尝试用 Comment 模型的 post_id 与 Post 模型的 id 进行匹配。默认外键名是 Eloquent 依据关联名、并在关联名后加上 _id 后缀确定的。当然，如果 Comment 模型的外键不是 post_id，那么可以将自定义键名作为第二个参数传递给 belongsTo 方法：
+
+	/**
+	 * 获得此评论所属的文章。
+	 */
+	public function post()
+	{
+	    return $this->belongsTo('App\Post', 'foreign_key');
+	}
+
+如果父级模型没有使用 id 作为主键，或者是希望用不同的字段来连接子级模型，则可以通过给 belongsTo 方法传递第三个参数的形式指定父级数据表的自定义键：
+
+	/**
+	 * Get the post that owns the comment.
+	 */
+	public function post()
+	{
+		// return $this->belongsTo(关联model, 关联model的联系键, 本model的联系键);	
+	    return $this->belongsTo('App\Post', 'foreign_key', 'other_key');
+	}
+
+## 多对多
+
+多对多关联 比 hasOne 和 hasMany 关联稍复杂些。 举一个关联例子，一个用户拥有很多种角色，同时这些角色也被其他用户共享。例如，许多用户都可以有「管理员」这个角色。要定于这种关联，需要用到这三个数据库表： users 、 roles 、 和 role_user 。 role_user 表 的命名是由关联的两个模型名按照字母顺序而来的，并且包含了 user_id 和 role_id 字段。
+
+多对多关联通过写方法定义，在这个方法的内部调用 belongsToMany 方法并返回其结果。例如，我们在 User 模型中定义 roles 方法：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class User extends Model
+	{
+	    /**
+	     * 获得用户的角色。
+	     */
+	    public function roles()
+	    {
+	        return $this->belongsToMany('App\Role');
+	    }
+	}
+
+关联被定义好之后，你就可以通过 roles 动态属性获取用户的角色了：
+
+	$user = App\User::find(1);
+	
+	foreach ($user->roles as $role) {
+	    //
+	}
+	
+当然，像其它所有的关联类型一样，你可以调用 roles 方法，利用链式调用对查询语句添加约束条件：
+
+	$roles = App\User::find(1)->roles()->orderBy('name')->get();
+
+如前所述， 为了确定关联连接表表名， Eloquent 会按照字母顺序合并两个关联模型的名称。当然，你也可以不使用这种约定，传参给 belongsToMany 方法的第二个参数：
+
+	return $this->belongsToMany('App\Role', 'role_user');
+
+除了自定义连接表表名外，你还可以通过给 belongsToMany 方法传递其它参数来自定义连接表的键名。第三个参数是定义此关联的模型在连接表里的外键名，第四个参数是另一个模型在连接表里的外键名：
+
+	// return $this->belongsToMany(关联表model, 中间表名（不要前缀）, 中间表中本model的关联ID, 中间表中关联modeldel的关联ID);	
+	return $this->belongsToMany('App\Role', 'role_user', 'user_id', 'role_id');
+
+### 定义反向关联
+
+定义多对多关联的反向关联，您只要在对方模型里再次调用 belongsToMany 方法就可以了。让我们接着以用户角色为例，在 Role 模型中定义一个 users 方法。
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Role extends Model
+	{
+	    /**
+	     * 获得此角色下的用户。
+	     */
+	    public function users()
+	    {
+	        return $this->belongsToMany('App\User');
+	    }
+	}
+
+如你所见，除了引入的模型变为 App\User 外，其它与在 User 模型中定义的完全一样。由于我们重用了 belongsToMany 方法，自定义连接表表名和自定义连接表里的键的字段名称在这里同样适用。
+
+### 获取中间表字段
+
+您已经学到，多对多关联需要有一个中间表支持，Eloquent 提供了一些有用的方法来和这张表进行交互。例如，假设我们的 User 对象关联了许多的 Role 对象。在获得这些关联对象后，可以使用模型的 pivot 属性访问中间表数据：
+
+	$user = App\User::find(1);
+	
+	foreach ($user->roles as $role) {
+	    echo $role->pivot->created_at;
+	}
+
+需要注意的是，我们取得的每个 Role 模型对象，都会被自动赋予 pivot 属性，它代表中间表的一个模型对象，能像其它的 Eloquent 模型一样使用。
+
+默认情况下，pivot 对象只包含两个关联模型的键。如果中间表里还有额外字段，则必须在定义关联时明确指出：
+
+	return $this->belongsToMany('App\Role')->withPivot('column1', 'column2');
+
+如果您想让中间表自动维护 created_at 和 updated_at 时间戳，那么在定义关联时加上 withTimestamps 方法即可
+
+	return $this->belongsToMany('App\Role')->withTimestamps();
+
+### 自定义 pivot 属性名称
+
+如前所述，来自中间表的属性可以使用 pivot 属性在模型上访问。 但是，你可以自由定制此属性的名称，以更好地反映其在应用中的用途。
+
+例如，如果你的应用中包含可能订阅播客的用户，则用户与播客之间可能存在多对多关系。 如果是这种情况，你可能希望将中间表访问器重命名为 subscription 而不是 pivot。 这可以在定义关系时使用 as 方法完成：
+
+	return $this->belongsToMany('App\Podcast')
+                ->as('subscription')
+                ->withTimestamps();
+
+一旦定义完成，你可以使用自定义名称访问中间表数据：
+
+	$users = User::with('podcasts')->get();
+	
+	foreach ($users->flatMap->podcasts as $podcast) {
+	    echo $podcast->subscription->created_at;
+	}
+
+### 通过中间表列过滤关系
+
+在定义关系时，你还可以使用 wherePivot 和 wherePivotIn 方法来过滤 belongsToMany 返回的结果：
+
+	return $this->belongsToMany('App\Role')->wherePivot('approved', 1);
+	
+	return $this->belongsToMany('App\Role')->wherePivotIn('priority', [1, 2]);
+
+### 定义自定义中间表模型
+
+如果你想定义一个自定义模型来表示关联关系中的中间表，可以在定义关联时调用 using 方法。所有自定义中间表模型都必须扩展自 Illuminate\Database\Eloquent\Relations\Pivot 类。例如，
+我们在写 Role 模型的关联时，使用自定义中间表模型 UserRole：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Role extends Model
+	{
+	    /**
+	     * 获得此角色下的用户。
+	     */
+	    public function users()
+	    {
+	        return $this->belongsToMany('App\User')->using('App\UserRole');
+	    }
+	}
+
+当定义 UserRole 模型时，我们要扩展 Pivot 类：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Relations\Pivot;
+	
+	class UserRole extends Pivot
+	{
+	    //
+	}
+
+## 预加载
+
+当作为属性访问模型关联时，关联的数据是「懒加载」。意味着关联的数据在你第一次访问该属性的时候才会加载。不过，当你查询父模型时，Eloquent 可以「预加载」关联数据。 预加载避免了 N + 1 次查询的问题。举例说明一个 N + 1 查询问题，考虑 Book 模型跟 Author 关联的情况：
+
+	<?php
+	
+	namespace App;
+	
+	use Illuminate\Database\Eloquent\Model;
+	
+	class Book extends Model
+	{
+	    /**
+	     * 获取书的作者
+	     */
+	    public function author()
+	    {
+	        return $this->belongsTo('App\Author');
+	    }
+	}
+
+现在，我们来获取所有书籍和书作者的数据：
+
+	$books = App\Book::all();
+	
+	foreach ($books as $book) {
+	    echo $book->author->name;
+	}
+
+这个循环将会执行一次从表中获取所有的书籍数据，然后每本书查询一次获取作者数据。所以，如果我们有 25 本书，这个循环就会执行 26 次： 1 次获得所有书的数据，另外的 25 次查询获取每本书的作者数据。
+
+幸好，我们可以使用预加载让查询次数减少到 2 次。查询时，你可以使用 with 方法指定哪些关联应该被预加载：
+
+	$books = App\Book::with('author')->get();
+	
+	foreach ($books as $book) {
+	    echo $book->author->name;
+	}
+
+这个操作，只执行了两次查询：
+
+	select * from books
+	
+	select * from authors where id in (1, 2, 3, 4, 5, ...)
+
+### 预加载多个关联
+
+有时，你可能需要在一次操作中预加载多个不同的关联。只需要给 with 方法传额外的参数就能实现：
+
+	$books = App\Book::with(['author', 'publisher'])->get();
+
+### 嵌套预加载
+
+预加载嵌套关联，可以使用「点」语法。例如，在一个 Eloquent 声明中，预加载所有书籍的作者和这些作者的个人联系信息：
+
+	$books = App\Book::with('author.contacts')->get();
+
+### 预加载特定的列
+
+你可能不是总需要从关联中获取每一列。出于这个原因， Eloquent 允许你在关联中指定你想要查询的列：
+
+	$users = App\Book::with('author:id,name')->get();
+	{note} 使用这个方法时，在你想获取的列中应始终有 id 列。
+
+<font color=red>**提示：使用这个方法时，在你想获取的列中应始终有 id 列。**</font>
+
+
+### 约束预加载
+
+有时，在使用预加载时，又需要在预加载上指定额外的查询约束。如下例：
+
+	$users = App\User::with(['posts' => function ($query) {
+	    $query->where('title', 'like', '%first%');
+	}])->get();
+
+上例中，Eloquent 仅预加载 title 列含有 first 的帖子。当然，可以调用 查询构造器 的其他方法，进一步自定义预加载操作：
+
+	$users = App\User::with(['posts' => function ($query) {
+	    $query->orderBy('created_at', 'desc');
+	}])->get();
+
+### 延迟预加载
+
+有时，需要在检索出来的模型上进行预加载。这对动态决定是否预加载就非常实用：
+
+	$books = App\Book::all();
+	
+	if ($someCondition) {
+	    $books->load('author', 'publisher');
+	}
+
+如果需要在预加载上添加额外的查询约束，可以传入一个数组，关联为键，接受查询实例的闭包为值：
+
+	$books->load(['author' => function ($query) {
+	    $query->orderBy('published_date', 'asc');
+	}]);
+
+loadMissing 方法可以仅在未加载关联时进行加载：
+
+	public function format(Book $book)
+	{
+	    $book->loadMissing('author');
+	
+	    return [
+	        'name' => $book->name,
+	        'author' => $book->author->name
+	    ];
+	}
+
+# 自定义函数库
+
+自定义的函数可以根据个人喜好放在任意位置，具体步骤：
+
+1. 创建一个函数
+2. 在项目中的composer.json文件中，执行自动加载命令：`"files":["自定义的文件名"]`
+3. 执行自动加载命令：`composer dumpautoload`
+
+自定义的函数库可以在控制器，模型中和模板中调用
+ 
+# 中间件防翻墙
+
+1. 创建中间件：`php artisan make:middelware CheckLogin`
+2. 注册自己定义的中间件：`'checklogin' => App\Http\Middleware\ChechLogin`
+3. 绑定路由中间件
+		
+		//后台模块
+		Route::group(['namespace' => 'Admin','prefix'=>'admin','middleware'=>['checklogin:admin.login']], function () {
+		    //用户登录显示
+		    Route::get('login','LoginController@index')->name('admin.login');
+		    //用户登录处理
+		    Route::post('login','LoginController@login')->name('admin.login');
+		    //后台主页
+		    Route::get('index','IndexController@index')->name('admin.index');
+		    //后台欢迎页
+		    Route::get('welcome','IndexController@welcome')->name('admin.welcome');
+		
+		});
+
+4. 在中间件中进行参数的获取和排除
+
+		<?php
+	
+		namespace App\Http\Middleware;
+		
+		use Closure;
+		
+		class CheckLogin
+		{
+		    /**
+		     * Handle an incoming request.
+		     *
+		     * @param  \Illuminate\Http\Request  $request
+		     * @param  \Closure  $next
+		     * @return mixed
+		     */
+		    public function handle($request, Closure $next, $param)
+		    {
+		        // 当前请求的路由别名
+		        $currentRoutName = $request->route()->getName();
+		        //如果当前路由别名不是登录的就验证
+		        if($currentRoutName != $param){
+		            //检测用户是否登录if
+		            if(!auth()->check()){
+		                //清空session
+		                session()->flush();
+		                // 跳转登录
+		                return redirect(route('admin.login'))->withErrors(['errors'=>'您还没有登录，请登录']);
+		            }
+		        }
+		        // $next($request)就是 Response对象
+		        return $next($request);
+		    }
+		}
