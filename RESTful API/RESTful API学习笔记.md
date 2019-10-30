@@ -48,3 +48,23 @@ https://fanyi.baidu.com/translate?aldtype=16047&query=&key=schema
 ## 总结
 
 RESTful API 是基于 HTTP 协议实现了通用的的前后端交互，前端通过某个 URI 告诉后端执行对应的操作，并返回所需资源，可以很好的**实现前后端分离**。
+
+# HTTP协议简介
+
+## 什么是 HTTP 协议
+
+HTTP 协议是一种基于**请求响应模式**的应用层协议。特点是简捷、快速。通俗的讲，就是一种**一问一答**的模式，前端（浏览器）发送一个 HTTP 请求后，后端（服务器）返回一个 HTTP 响应，如下图所示。
+
+![2.1示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/2.1.jpg)
+
+## HTTP 请求
+
+HTTP 请求由三个部分组成，分别是：
+
+1. 请求行
+2. 请求头
+3. 请求体
+
+如图所示
+
+![2.2示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/2.2.jpg)
