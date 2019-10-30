@@ -22,7 +22,7 @@ URI(Uniform Resource Identifier）唯一资源标志符，URL是URI的一个子�
 
 在 HTTP 协议中，URI 的组成如下：
 
-Schema://host[:port]/path[?query-string]
+**Schema://host[:port]/path[?query-string]**
 
 - Schema： 使用的协议类型，如：http/https/ftp等
 - host:： 主机域名或IP地址
@@ -68,3 +68,60 @@ HTTP 请求由三个部分组成，分别是：
 如图所示
 
 ![2.2示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/2.2.jpg)
+
+### 请求行
+
+请求行格式如下：
+
+**Method Request-URI HTTP-Version CRLF**
+
+- Method： HTTP 请求类型，如：GET/POST/PUT/DELETE
+- Request-URI： HTTP 请求的唯一标识，如：/test.html或/test.php?id=1
+- HTTP-Version： HTTP 协议版本，如：HTTP/1.1
+- CRLF: 回车换行 CR（回车\n） LF（换行\r）
+
+例子： GET/test.php HTTP/1.1（CRLF）
+
+<font color=red>请求行以“**空格**”分隔，除结尾外的CR和LF外，不允许出现单独的CR或LF字符</font>
+
+### 请求头
+
+请求头包含许多有关前端的环境和请求正文的有用信息。
+
+请求头存在的主要意义是：**将前端的一些信息告诉给后端**，比如 Cookie 信息就是通过请求头由浏览器发送给服务器的。
+
+### 请求体
+
+请求体主要包含前端发送给后端的数据（**参数**）。
+
+对于 GET 请求，一般不需要请求体，因为 GET 参数直接体现在 URL 上。
+
+对于 POST 请求， 需要请求体，请求体里保存 POST 参数，在后端通过 $_POST 超全局数组接收。
+
+### 请求方法
+
+HTTP 的请求方法如下所示：
+
+方法 | 含义
+:-|:-
+GET | 请求指定的页面信息，并返回实体主体
+HEAD | 类似于 GET 请求，只不过返回的响应中没有具体的内容，用于获取报头，只返回响应头信息
+POST | 向指定资源提交数据进行处理请求（例如提交表单或者上传文件）。数据被包含在请求体中。POST 请求可能会导致新的资源的建立和/或已有资源的修改
+PUT | 从客户端向服务器传送的数据取代指定的文档的内容
+DELETE | 请求服务器删除指定的资源
+CONNECT | HTTP/1.1 协议中预留给能够将连接改为管道方式的代理服务器
+OPTIONS | 允许客户端查看服务器的性能
+TRACE | 回显服务器收到的请求，主要用于测试或诊断
+PATCH | 是对 PUT 方法的补充，用来对已知资源进行局部更新
+
+<font color=red>**提示：POST/DELETE/PUT/GET: 分别对应 增/删/改/查 四种操作**</font>
+
+### 小结
+
+HTTP 请求时前端发送给后端的数据，由【请求行、请求头、请求体】三部分组成，用来告诉后端需要执行何种操作，返回何种数据。
+
+
+
+
+
+
