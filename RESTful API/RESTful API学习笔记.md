@@ -188,7 +188,7 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 - 500 【Internal Server Error】： 服务器发生不可预期的错误
 
 
-# RESTful API 设计六要素
+# RESTful API 设计六要素 【UMQSER】
 
 **RESTful API 是一种面向资源的设计思想**，主要包括六个方面：
 
@@ -228,7 +228,6 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 - POST： 在服务器<font color=red>新建一个资源</font>
 - PUT： 在服务器<font color=red>更新资源</font>，服务器返回完整的属性
 - DELETE： 从服务器<font color=red>删除资源</font>
-
 - HEAD： 从服务器<font color=red>获取响应头信息</font>
 - PATCH： 在服务器<font color=red>更新局部资源</font>，服务器只返回更新的属性
 
@@ -255,11 +254,11 @@ GET/articles/1 --- 获取主键id为1的文章
 :-|:-:|:-
 200 | OK | 操作成功，并返回数据
 201 | CREATED | 新建成功
-204 | NO CONTENT | 删除成功
+204 | NO CONTENT | 请求成功，删除成功，空文档
 400 | BAD REQUEST | 请求语法错误
 403 | Forbidden | 请求没有权限的资源
 404 | NOT FOUND | 请求的资源不存在
-500 | INTERNAL SERVER ERRROR | 服务器发生不可预期的错误
+500 | INTERNAL SERVER ERROR | 服务器发生不可预期的错误
 
 ## 错误处理
 
