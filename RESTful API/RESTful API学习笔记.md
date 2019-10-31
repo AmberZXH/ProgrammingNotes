@@ -170,7 +170,7 @@ GET/articles/1 --- 获取主键id为1的文章
 :-|:-:|:-
 200 | OK | 操作成功，并返回数据
 201 | CREATED | 新建成功
-204 | NO CONTENT | 请求成功，删除成功，空文档
+204 | NO CONTENT | 请求成功，删除成功，返回空文档
 400 | BAD REQUEST | 请求语法错误
 403 | Forbidden | 请求没有权限的资源
 404 | NOT FOUND | 请求的资源不存在
@@ -249,7 +249,7 @@ SOAP 是交换数据的一种协议规范，是一种轻量级、简单的、基
 REST 接口和 SOAP 接口是两种不同的数据通信接口。
 
 - REST 使用的是 HTTP 协议通信，请求的响应值可以是 xml 也可以是 json
-- SOAP s使用的是 SOAP 协议通信，请求和响应都是 xml ，而且有  wsdl 作为请求和响应信息的标准
+- SOAP 使用的是 SOAP 协议通信，请求和响应都是 xml ，而且有  wsdl 作为请求和响应信息的标准
 
 #### 核心方面
 
@@ -283,11 +283,6 @@ REST 的应用可以充分利于 HTTP 协议对缓存支持的能力。
 并且，随着 Web Site as Web Services（网站就是网络服务） 演进的趋势，还有由于 REST 设计实现的简单性和强扩展性的特点。相信，REST 将会成为 Web 服务的一个重要架构实践领域。 
 
 
-
-
-
-
-
 # HTTP 协议简介
 
 ## 什么是 HTTP 协议
@@ -295,6 +290,20 @@ REST 的应用可以充分利于 HTTP 协议对缓存支持的能力。
 HTTP 协议是一种基于**请求响应模式**的应用层协议，是一种**无状态**的协议。特点是简捷、快速。通俗的讲，就是一种**一问一答**的模式，前端（浏览器）发送一个 HTTP 请求后，后端（服务器）返回一个 HTTP 响应，如下图所示。
 
 ![2.1示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/2.1.jpg)
+
+## HTTP 的特点
+
+**1.HTTP 协议是无状态的** 
+
+就是说每次 HTTP 请求都是独立的，任何两个请求之间没有什么必然的联系。
+
+**2.多次 HTTP 请求**
+
+在客户端请求网页时，多数情况下不是一次请求就能成功的，服务端首先响应 HTML 页面，然后浏览器收到响应之后发现 HTML 页面还引用了其他资源，例如：css、js、图片等，还会自动发送 HTTP 请求这些需要的资源。现在的 HTTP 版本支持管道机制，可以同时请求和响应多个请求，大大提高了效率。
+
+**3.基于TCP协议**
+
+HTTP 协议目的是规定客户端和服务端数据传输的格式和数据交互行为，并不负责数据传输的细节。底层是基于 TCP 实现的。现在使用的版本当中是默认持久连接的，也就是多次 HTTP 请求使用一个 TCP 连接。 
 
 ## HTTP 请求
 
@@ -409,18 +418,113 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 
 ## 状态码
 
-- 1xx： 【指示信息】-- 表示请求已接收，继续处理
-- 2xx： 【成功】-- 表示请求已成功接收，理解、接受
-- 3xx： 【重定向】-- 要完成求情必须进行更进一步的操作
-- 4xx： 【客户端错误】-- 请求有语法错误或请求无法实现
-- 5xx： 【服务器端错误】-- 服务器端未能实现合法的请求
+状态码分类如下：
 
-### 常见状态码
+分类 | 说明 | 描述
+:- | :-
+1xx | 指示信息 | 表示请求已接收，继续处理
+2xx | 成功 | 表示请求已成功接收，理解、接受
+3xx | 重定向 | 要完成求情必须进行更进一步的操作
+4xx | 客户端错误 | 请求有语法错误或请求无法实现
+5xx | 服务器端错误 | 服务器端未能实现合法的请求
 
-- 200 【OK】： 客户端请求成功
-- 400 【Bad Request】： 客户端请求有语法错误，不能被服务器所理解
-- 401 【Unauthorized】： 请求未经授权，这个状态码必须和www-Authenticate一起使用
-- 403 【Forbidden】： 服务器收到请求，但是拒绝服务
-- 404 【Not Found】： 请求的的资源不存在，比如错误的 URL
-- 500 【Internal Server Error】： 服务器发生不可预期的错误
+### 状态码列表
+
+状态码 | 英文名称 | 描述
+:-|:-|:-
+100 | Continue | 继续。客户端应继续其请求
+101 | Switching Protocols | 切换协议。服务器根据客户端的请求切换协议。只能切换到更高级的协议，例如，切换到HTTP的新版本协议
+ | 
+200 | OK | 请求成功。一般用于GET与POST请求
+201 | Created | 已创建。成功请求并创建了新的资源
+202 | Accepted | 已接受。已经接受请求，但未处理完成
+203 | Non-Authoritative Information | 非授权信息。请求成功。但返回的meta信息不在原始的服务器，而是一个副本
+204 | No Content | 无内容。服务器成功处理，但未返回内容。在未更新网页的情况下，可确保浏览器继续显示当前文档
+205 | Reset Content | 重置内容。服务器处理成功，用户终端（例如：浏览器）应重置文档视图。可通过此返回码清除浏览器的表单域
+206 | Partial Content | 部分内容。服务器成功处理了部分GET请求
+ |
+300 | Multiple Choices | 多种选择。请求的资源可包括多个位置，相应可返回一个资源特征与地址的列表用于用户终端（例如：浏览器）选择
+301 | Moved Permanently | 永久移动。请求的资源已被永久的移动到新URI，返回信息会包括新的URI，浏览器会自动定向到新URI。今后任何新的请求都应使用新的URI代替
+302 | Found | 临时移动。与301类似。但资源只是临时被移动。客户端应继续使用原有URI
+303 | See Other | 查看其它地址。与301类似。使用GET和POST请求查看
+304 | Not Modified | 未修改。所请求的资源未修改，服务器返回此状态码时，不会返回任何资源。客户端通常会缓存访问过的资源，通过提供一个头信息指出客户端希望只返回在指定日期之后修改的资源
+305 | Use Proxy | 使用代理。所请求的资源必须通过代理访问
+306 | Unused | 已经被废弃的HTTP状态码
+307 | Temporary Redirect | 临时重定向。与302类似。使用GET请求重定向
+ | 
+400 | Bad Request | 客户端请求的语法错误，服务器无法理解
+401 | Unauthorized | 请求要求用户的身份认证
+402 | Payment Required | 保留，将来使用
+403 | Forbidden | 服务器理解请求客户端的请求，但是拒绝执行此请求
+404 | Not Found | 服务器无法根据客户端的请求找到资源（网页）。通过此代码，网站设计人员可设置"您所请求的资源无法找到"的个性页面
+405 | Method Not Allowed | 客户端请求中的方法被禁止
+406 | Not Acceptable | 服务器无法根据客户端请求的内容特性完成请求
+407 | Proxy Authentication Required | 请求要求代理的身份认证，与401类似，但请求者应当使用代理进行授权
+408 | Request Time-out | 服务器等待客户端发送的请求时间过长，超时
+409 | Conflict | 服务器完成客户端的 PUT 请求时可能返回此代码，服务器处理请求时发生了冲突
+410 | Gone | 客户端请求的资源已经不存在。410不同于404，如果资源以前有现在被永久删除了可使用410代码，网站设计人员可通过301代码指定资源的新位置
+411 | Length Required | 服务器无法处理客户端发送的不带Content-Length的请求信息
+412 | Precondition Failed | 客户端请求信息的先决条件错误
+413 | Request Entity Too Large | 由于请求的实体过大，服务器无法处理，因此拒绝请求。为防止客户端的连续请求，服务器可能会关闭连接。如果只是服务器暂时无法处理，则会包含一个Retry-After的响应信息
+414 | Request-URI Too Large | 请求的URI过长（URI通常为网址），服务器无法处理
+415 | Unsupported Media Type | 服务器无法处理请求附带的媒体格式
+416 | Requested range not satisfiable | 客户端请求的范围无效
+417 | Expectation Failed | 服务器无法满足Expect的请求头信息
+ |
+500 | Internal Server Error | 服务器内部错误，无法完成请求
+501 | Not Implemented | 服务器不支持请求的功能，无法完成请求
+502 | Bad Gateway | 作为网关或者代理工作的服务器尝试执行请求时，从远程服务器接收到了一个无效的响应
+503 | Service Unavailable | 由于超载或系统维护，服务器暂时的无法处理客户端的请求。延时的长度可包含在服务器的Retry-After头信息中
+504 | Gateway Time-out | 充当网关或代理的服务器，未及时从远端服务器获取请求
+505 | HTTP Version not supported | 服务器不支持请求的HTTP协议的版本，无法完成处理
+
+
+## Content-Type
+
+Content-Type：内容类型，定义网络文件的类型和网页的编码，决定浏览器以什么形式、什么编码读取这个文件。
+
+### application/x-www-form=urlencoded
+
+	POST http://www.example.com HTTP/1.1	
+	Content-Type: application/x-www-from=urlendoded;charset=utf-8
+
+	title=test&sub%5bB%5D=1&sub%5B%5D=2&%5bB%5D=3
+
+### multipart/form-data
+
+	POST http://www.example.com HTTP/1.1	
+	Content-Type: multipart/form-data; boundary=---webKitFormBoundarryrGKCBY7qhfd3trwa
+	
+	---webKitFormBoundarryrGKCBY7qhfd3trwa
+
+	Content-Dispostition: form-data;name="text"
+
+	title
+	
+	---webKitFormBoundarryrGKCBY7qhfd3trwa
+	Content-Dispostition: form-data;name="file";filename="test.png"
+	Content-Type: image/png
+
+	PNG ... content of test.png
+	---webKitFormBoundarryrGKCBY7qhfd3trwa--
+
+### application/json
+
+	POST http://www.example.com HTTP/1.1	
+	Content-Type: application/json;charset-utf-8
+	
+	{"title":"test","sub":[1,2,3]}
+
+### text/xml
+
+	POST http://www.example.com HTTP/1.1	
+	Content-Type: text/xml
+	
+	<!--?xml version="1.0"?-->
+	<methodcall>
+		<methodname>examples.getStateName</methodname>
+		<params>
+			<value><i4>41<i4></value>
+		</params>
+	</methodcall>	
 
