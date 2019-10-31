@@ -488,7 +488,7 @@ Content-Type：内容类型，定义网络文件的类型和网页的编码，�
 ### application/x-www-form=urlencoded
 
 	POST http://www.example.com HTTP/1.1	
-	Content-Type: application/x-www-from=urlendoded;charset=utf-8
+	Content-Type: application/x-www-form=urlendoded;charset=utf-8
 
 	title=test&sub%5bB%5D=1&sub%5B%5D=2&%5bB%5D=3
 
