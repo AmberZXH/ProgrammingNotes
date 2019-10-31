@@ -421,7 +421,7 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 状态码分类如下：
 
 分类 | 说明 | 描述
-:- | :-
+:-  | :-
 1xx | 指示信息 | 表示请求已接收，继续处理
 2xx | 成功 | 表示请求已成功接收，理解、接受
 3xx | 重定向 | 要完成求情必须进行更进一步的操作
@@ -481,7 +481,9 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 
 ## Content-Type
 
-Content-Type：内容类型，定义网络文件的类型和网页的编码，决定浏览器以什么形式、什么编码读取这个文件。
+Content-Type：内容类型，定义网络文件的类型和网页的编码，决定浏览器以什么形式、什么编码读取这个文件。目前常见的 Content-Type有：application/x-www-form=urlencoded、multipart/form-data、application/json、text/xml四种。
+
+其中：application/x-www-form=urlencoded、multipart/form-data是form表单支持的两种类型。
 
 ### application/x-www-form=urlencoded
 
