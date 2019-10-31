@@ -18,9 +18,29 @@ API（Application Programming Interface，应用程序接口）是一些预先�
 
 ![1.1示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/1.1.jpg)
 
-## 什么是RESTful API
+## 什么是 RESTful API
 
-RESTful API 是一种软件设计风格，主要用于客户端与服务器端交互的软件，一般来说 RESTful API 是基于HTTP协议，通过某个唯一资源标志符（URI）请求对应的服务器资源。通常我们把 RESTful API 编程也叫作**接口编程**。
+RESTful 是 “REpresentational State Transfer”， 可翻译为：表现性状态转换。
+
+在 RESTful 中一切都被视为资源，每个资源有对应的 URI 标识。
+
+处理资源使用POST/DELETE/PUT/GET等 HTTP 方法操作实现创建、删除、修改和查询的操作。
+
+客户端通过 4 个 HTTP 动词，对服务器资源进行操作，实现 “表现层状态转换”。
+
+表现是指资源的表现，客户端和服务器之间，传递这种资源的某种表现层。
+
+无状态。每个请求是独立的，从客户端到服务器端的每个请求都必须包含所有的必要信息。
+
+**RESTful API 是一种软件设计风格，主要用于客户端与服务器端交互的软件，一般来说 RESTful API 是基于HTTP协议，通过某个唯一资源标志符（URI）请求对应的服务器资源。通常我们把 RESTful API 编程也叫作接口编程。**
+
+<font color=red>**提示：**</font>
+
+- RESTful API 只是一种设计风格，不是标准，只是提供了一组设计原则和约束条件
+- 它主要用户客户端和服务器端交互类的软件
+- 它的特点是更简洁，更有层次，更易于实现缓存等机制
+
+------
 
 **扩展1：什么是URI？**
 
@@ -38,9 +58,9 @@ URI(Uniform Resource Identifier）统一资源标志符，URL是URI的一个子�
 
 如：
 
-https://www.baidu.com
-
-https://fanyi.baidu.com/translate?aldtype=16047&query=&key=schema
+	https://www.baidu.com
+	
+	https://fanyi.baidu.com/translate?aldtype=16047&query=&key=schema
 
 **扩展2：什么是资源？**
 
@@ -56,6 +76,217 @@ https://fanyi.baidu.com/translate?aldtype=16047&query=&key=schema
 **小结：**
 
 RESTful API 是基于 HTTP 协议实现了通用的的前后端交互，前端通过某个 URI 告诉后端执行对应的操作，并返回所需资源，可以很好的**实现前后端分离**。
+
+
+# RESTful API 规范
+
+## 协议
+
+RESTful API 与用户的通信协议，总是使用 HTTP 协议。
+
+## 域名
+
+应尽量将 API 部署在专用的域名之下。
+
+	https://api.exemple.com
+
+如果确定 API 很简单，不会有进一步扩展，可以考虑放在主域名下。
+
+	https://example.com/api/
+
+## 版本
+
+应该将 API 的版本号放入 URL 中
+
+	https://api.example.com/version/
+
+另一种做法是：将版本号放入 HTTP 头信息中，但不如放在 URL 中直观和方便。
+
+## RESTful API 设计六要素 【UMQSER】
+
+**RESTful API 是一种面向资源的设计思想**，主要包括六个方面：
+
+1. 资源路径【URI】
+2. HTTP动词【Method】
+3. 过滤信息【query-string】
+4. 状态码【Status-code】
+5. 错误信息【Error】
+6. 返回结果【Result】
+
+如图所示：
+
+![3.1示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/3.1.jpg)
+
+
+### 资源路径
+
+路径又称“终点”（endpoint），表示 API 的具体网址。
+
+在 RESTful 架构中，每一个网址代表一种资源（resource），所以，网址中不能有动词，只能有名词，而且名词往往与数据库的表名对应。一般来说，数据库中的表名都是同种记录的“集合”，所以 **API 中的名词也应该使用复数**，比如：
+
+- http://api.local.com/movies  ----表示电影资源
+- http://api.local.com/images  ----表示图片资源
+- http://api.local.com/musics  ----表示音乐资源
+- http://api.local.com/articles  ----表示文章资源
+
+为了方便开发，可以在URI中**加入版本号：**
+
+- http://api.local.com/<font color=red>v1</font>/movies  ----表示电影资源
+- http://api.local.com/<font color=red>v1</font>/images  ----表示图片资源
+- http://api.local.com/<font color=red>v1</font>/musics  ----表示音乐资源
+- http://api.local.com/<font color=red>v1</font>/articles  ----表示文章资源
+
+### HTTP 动词
+
+对于资源，一般有 4 个操作，即CURD(Create,Update,Retrieve,Delete)增/删/改/查
+
+- GET： 从服务器<font color=red>获取资源</font>（一项或多项）
+- POST： 在服务器<font color=red>新建一个资源</font>
+- PUT： 在服务器<font color=red>更新资源</font>，服务器返回完整的属性
+- DELETE： 从服务器<font color=red>删除资源</font>
+- HEAD： 从服务器<font color=red>获取响应头信息</font>
+- PATCH： 在服务器<font color=red>更新局部资源</font>，服务器只返回更新的属性
+
+例子：
+
+POST/articles  --- 创建文章内容
+GET/articles/1 --- 获取主键id为1的文章
+
+### 过滤信息
+
+在服务端返回的数据很多时，服务器不可能全部返回，此时，我们可以在客户端携带过滤信息，比如：分页信息
+
+例子：
+
+- ?page=1   --- 第一页的信息
+- ?offset=10&per_page=10  --  每页10条，偏移10
+
+
+### 响应状态码
+
+服务端返回的信息，用来告诉客户端操作结果，如：
+
+状态码 | 含义 | 说明
+:-|:-:|:-
+200 | OK | 操作成功，并返回数据
+201 | CREATED | 新建成功
+204 | NO CONTENT | 请求成功，删除成功，空文档
+400 | BAD REQUEST | 请求语法错误
+403 | Forbidden | 请求没有权限的资源
+404 | NOT FOUND | 请求的资源不存在
+500 | INTERNAL SERVER ERROR | 服务器发生不可预期的错误
+
+### 错误处理
+
+如果状态码是 4xx 或者 5xx ，需要告诉客户端对应的错误信息，以json格式返回
+
+	{
+		"error": "错误信息",
+	}
+
+### 返回结果
+
+根据不同的操作结果，服务器需要返回的结果应该符合这样的规范：
+
+- GET/collections  ---  返回资源列表【数组】
+- GET/collections/:id  ---  返回单个资源
+- POST/collections  ---  返回新生成的资源
+- PUT/collections/:id  ---  返回资源的<font color=red>完整属性</font>
+- PATCH/collections/:id  ---  返回被<font color=red>修改的属性 </font>
+- DELETE/collections/:id  ---  返回 204 状态码 + 空文档
+
+
+# RESTful SOAP和RPC的对比
+
+## 概念
+
+### REST
+
+一种架构设计风格，提供了设计原则和约束条件。
+
+### RPC（远程过程调用）
+
+是一种允许分布式应用程序调用网络上不同计算机的可用服务的机制。
+
+其实就是通过一台机器通过一些参数去访问另一台机器上的函数或方法，得到返回结果。
+
+### 远程过程调用发展历程
+
+**第一代：**
+
+- ONC RPC （开放网络计算机的远程过程调用），OSF RPC （开放软件基金会的远程过程调用）
+
+**第二代：**
+
+- CORBA（Common Pbject Request Broker Architecture）即公共对象请求代理体系结构
+- DCOM（分布式组件对象模型），COM+
+- Java RMI
+- .NET Remoting
+
+**第三代：**
+
+- XML-RPC,SOAP,Web Service
+- PHPRPC， Hessian， JSON-RPC
+- Microsoft WCF， WebAPI
+- ZeroClce，Thrift，GRPC
+- Hprose
+
+### SOAP
+
+SOAP 即简单对象访问协议， XML-RPC（Simple Object Access Protocol)也叫作简单对象访问协议。
+
+SOAP 是交换数据的一种协议规范，是一种轻量级、简单的、基于 XMl 的协议规范。SOAP 最主要的工作是使用标准的 XML 描述了 RPC 的请求信息（URI/类/方法/参数/返回值）。
+
+理论上， SOAP 就是一段 XML， 可以通过 HTTP/SMTP等发送它，并且 SOAP也是跨语言的。
+
+
+## 区别
+
+### REST与SOAP
+
+#### 概念方面
+
+REST 接口和 SOAP 接口是两种不同的数据通信接口。
+
+- REST 使用的是 HTTP 协议通信，请求的响应值可以是 xml 也可以是 json
+- SOAP s使用的是 SOAP 协议通信，请求和响应都是 xml ，而且有  wsdl 作为请求和响应信息的标准
+
+#### 核心方面
+
+- REST 是基于 HTTP 之上建立的一种接口规范，核心是资源
+- SOAP 本身是一种协议，以 xml 格式传输
+- SOAP 的 Web 服务是以操作为中心的
+
+#### 协议方面
+
+- RESTful 使用标准的 HTTP 方法（GET/POST/PUT/DELETE）来抽象所有 Web 系统的服务能力
+- SOAP 应用都是通过定义自己个性化的接口方法来抽象 Web 服务
+
+#### 安全控制方面
+
+代理服务器可以制定安全策略，一般代理服务器的实现根据（URI、HTTP Method）两元素组来决定 HTTP 请求的安全合法性。当发现 DELETE 这样的请求时，予以拒绝，对于  SOAP ，如果我们想借助于既有的代理服务器进行安全控制，会比较尴尬。因为，代理服务器需要解码 SOAP 的协议，这显然是不合理的。
+
+
+#### 缓存方面
+
+HTTP GET 请求被设计用来节省客户端与服务端之间的网络传输带来的开销，这也给客户端实现缓存机制提供了可能。
+
+REST 的应用可以充分利于 HTTP 协议对缓存支持的能力。
+而所有经过缓存服务器的 SOAP 信息总是 HTTP POST ，缓存服务器如果不解码 SOAP 消息体，就没法知道该 HTTP 请求是否是想从服务器获取数据。 
+
+以上决定了基于 SOAP 应用的缓存机制要远比 REST 复杂。  
+
+**总结：**
+
+基于 REST 构建的系统，其系统的扩展能力要强于 SOAP，这可以体现在它的统一接口抽象、代理服务器支持、缓存服务器支持等多方面。
+
+并且，随着 Web Site as Web Services（网站就是网络服务） 演进的趋势，还有由于 REST 设计实现的简单性和强扩展性的特点。相信，REST 将会成为 Web 服务的一个重要架构实践领域。 
+
+
+
+
+
+
 
 # HTTP 协议简介
 
@@ -193,94 +424,3 @@ HTTP 响应式后端（服务器）返回给前端（客户端）的数据，由
 - 404 【Not Found】： 请求的的资源不存在，比如错误的 URL
 - 500 【Internal Server Error】： 服务器发生不可预期的错误
 
-
-# RESTful API 设计六要素 【UMQSER】
-
-**RESTful API 是一种面向资源的设计思想**，主要包括六个方面：
-
-1. 资源路径【URI】
-2. HTTP动词【Method】
-3. 过滤信息【query-string】
-4. 状态码【Status-code】
-5. 错误信息【Error】
-6. 返回结果【Result】
-
-如图所示：
-
-![3.1示意图](https://raw.githubusercontent.com/CayangPro/my_notes/master/RESTful%20API/img/3.1.jpg)
-
-
-## 资源路径
-
-在 RESTful API 中，每个资源路径对应唯一的资源，所以规定在网址中不能有动词，只能有名词，并且一般来说为复数，比如：
-
-- http://api.local.com/movies  ----表示电影资源
-- http://api.local.com/images  ----表示图片资源
-- http://api.local.com/musics  ----表示音乐资源
-- http://api.local.com/articles  ----表示文章资源
-
-为了方便开发，可以在URI中**加入版本号：**
-
-- http://api.local.com/<font color=red>v1</font>/movies  ----表示电影资源
-- http://api.local.com/<font color=red>v1</font>/images  ----表示图片资源
-- http://api.local.com/<font color=red>v1</font>/musics  ----表示音乐资源
-- http://api.local.com/<font color=red>v1</font>/articles  ----表示文章资源
-
-## HTTP 动词
-
-对于资源，一般有 4 个操作，即CURD(Create,Update,Retrieve,Delete)增/删/改/查
-
-- GET： 从服务器<font color=red>获取资源</font>（一项或多项）
-- POST： 在服务器<font color=red>新建一个资源</font>
-- PUT： 在服务器<font color=red>更新资源</font>，服务器返回完整的属性
-- DELETE： 从服务器<font color=red>删除资源</font>
-- HEAD： 从服务器<font color=red>获取响应头信息</font>
-- PATCH： 在服务器<font color=red>更新局部资源</font>，服务器只返回更新的属性
-
-例子：
-
-POST/articles  --- 创建文章内容
-GET/articles/1 --- 获取主键id为1的文章
-
-## 过滤信息
-
-在服务端返回的数据很多时，服务器不可能全部返回，此时，我们可以在客户端携带过滤信息，比如：分页信息
-
-例子：
-
-- ?page=1   --- 第一页的信息
-- ?offset=10&per_page=10  --  每页10条，偏移10
-
-
-## 响应状态码
-
-服务端返回的信息，用来告诉客户端操作结果，如：
-
-状态码 | 含义 | 说明
-:-|:-:|:-
-200 | OK | 操作成功，并返回数据
-201 | CREATED | 新建成功
-204 | NO CONTENT | 请求成功，删除成功，空文档
-400 | BAD REQUEST | 请求语法错误
-403 | Forbidden | 请求没有权限的资源
-404 | NOT FOUND | 请求的资源不存在
-500 | INTERNAL SERVER ERROR | 服务器发生不可预期的错误
-
-## 错误处理
-
-如果状态码是 4xx 或者 5xx ，需要告诉客户端对应的错误信息，以json格式返回
-
-	{
-		"error": "错误信息",
-	}
-
-## 返回结果
-
-根据不同的操作结果，服务器需要返回的结果应该符合这样的规范：
-
-- GET/collections  ---  返回资源列表【数组】
-- GET/collections/:id  ---  返回单个资源
-- POST/collections  ---  返回新生成的资源
-- PUT/collections/:id  ---  返回资源的<font color=red>完整属性</font>
-- PATCH/collections/:id  ---  返回被<font color=red>修改的属性 </font>
-- DELETE/collections/:id  ---  返回 204 状态码 + 空文档
