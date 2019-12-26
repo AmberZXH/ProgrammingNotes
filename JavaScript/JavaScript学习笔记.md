@@ -83,7 +83,9 @@ ECMAScript 中有**5种简单的数据类型（也称为基本数据）**和**1�
 - Number
 - String
 
-1种复杂数据类型：Objdect，Object本质上是一组由无序的名值对组成的。
+1种复杂数据类型：
+
+- Objdect，Object本质上是一组由无序的名值对组成的。
 
 ### typeof 操作符
 
