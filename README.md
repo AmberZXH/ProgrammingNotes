@@ -1,2 +1,3 @@
-# my_notes
-个人学习笔记（markdown）
+# ProgrammingNotes
+
+个人学习笔记整理（markdown），不定期更新
