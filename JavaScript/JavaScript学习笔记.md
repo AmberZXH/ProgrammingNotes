@@ -1196,7 +1196,7 @@ JavaScript 具有自动垃圾收集机制。其**原理： 找出那些不再继
 
 **对象字面量是向函数传递大量可选参数的首选方。**
 
-一般来说，访问对象属性时使用的都是点表示，这是很多面向对象语言中的通用的语法。在 JavaScript 中也可使用方括号表示法来访问对象的属性。使用示例：
+一般来说，访问对象属性时使用的都是**点表示**，这是很多面向对象语言中的通用的语法。在 JavaScript 中也可使用方括号表示法来访问对象的属性。使用示例：
 
 	alert(person.name);            // "lisi"
 	alert(person["name"]);         // "lisi"
@@ -1210,7 +1210,90 @@ JavaScript 具有自动垃圾收集机制。其**原理： 找出那些不再继
 	
 	person["first name"] = "lisi";
 
-**除非必须使用变量来访问属性，否则我们<u>建议使用点表示法</u>。**
+除非必须使用变量来访问属性，否则**<u>建议使用点表示法</u>。**
+
+### Array 类型
+
+ECMAScript 数组中的每一项可以保存任何类型的数据。
+
+创建数组的方式有两种：
+
+1. 使用 Array 构造函数
+2. 使用数组字面量表示法
+
+**1. 使用 Array 构造函数**
+
+	var arr = new Array(); 
+	var colors = new Array('red');
+	
+给构造函数传递一个数字，将指定数组的长度。如下所示：
+
+	var arr = new Array(4);
+	alert(arr.length);   // 4
+
+也可省略 new 操作符：
+	
+	var arr = Array();
+	var colors = Array('red');
+	var res = Array(4);
+
+**2. 使用数组字面量表示法**
+
+	var colors = ['red','blue','green'];
+
+**与对象一样，在使用数组字面量表示法时，也不会调用 Array 构造函数。**
+
+在读取和设置数组的值时，要使用方括号并提供相应的索引值，索引值从 0 开始，如：
+
+	var colors = ['red','blue','green'];
+	alert(colors[0]);   // red
+
+**数组的 length 属性不是只读的，通过设置这个属性，可以从数组的末尾移除或向数组添加新项。**如：
+
+	var colors = ['red','blue','green'];
+	colors.length = 2;
+	alert(colors[2]);   // undefined
+	
+
+	var colors = ['red','blue','green'];
+	colors.length = 4;
+	alert(colors[3]);   // undefined
+
+利用 length 属性可以方便地在数组末尾添加新项，如：
+	
+	var colors = ['red','blue','green'];
+	colors.length = 'pink';
+	colors.length = 'black';
+
+	colors[99] = 'yellow';
+	// 现在数组的长度为 100，而 colors[5] 到 colors[98]，实际上不存在，所以访问它们将返回 undefined
+
+**数组最多可以包含 4 294 967 295 个项。超过这个上限值将发生异常。而创建一个初始值大小与之相近的数组，则可能导致运行时间超长的脚本错误。**
+
+#### 检测数组
+
+检测数组可使用以下两种方法：
+
+1.  value instanceof Array，该方法在网页中包含多个框架时，会存在问题
+2.  Array.isArray(value)，ES5 新增方法
+
+#### 转换方法
+
+所有对象都具有 toLocaleString()、toString() 和 valueOf() 方法。**valueOf() 将返回数组本身，数组的 toString() 方法返回以逗号分隔数组每个值的字符串。**
+
+	var colors = ['red','blue','green'];
+	alert(colors.toString());    // red,blue,green
+	alert(colors.valueOf());     // red,blue,green
+	alert(colors);               // red,blue,green
+
+使用 **join()** 方法，可以使用不同的分隔符来构建这个字符串。join() 只接收一个参数，即用作分隔符的字符串，如果不传或者传入的是 undefined，则默认使用逗号作为分隔符。如下所示：
+
+	var colors = ['red','blue','green'];
+	alert(colors.join(","));    // red,blue,green
+	alert(colors.join("|"));    // red|blue| green
+	
+
+
 
 ---
 
@@ -1222,7 +1305,7 @@ JavaScript 具有自动垃圾收集机制。其**原理： 找出那些不再继
 
 ## 变量提升
 
-ES6之前一般使用var来声明变量，变量提升简单来说就是把我们所写的类似于var a = 123;这样的代码，声明提升到它所在作用域的顶端去执行，到我们代码所在的位置来赋值；在执行代码之前，解析器会先执行代码分析，在这个过程中，会将变量申明提升到作用域的顶端去执行。
+ES6 之前一般使用var来声明变量，变量提升简单来说就是把我们所写的类似于 var a = 123; 这样的代码，声明提升到它所在作用域的顶端去执行，到我们代码所在的位置来赋值；在执行代码之前，解析器会先执行代码分析，在这个过程中，会将变量申明提升到作用域的顶端去执行。
 
 如：
 
@@ -1254,12 +1337,14 @@ ES6之前一般使用var来声明变量，变量提升简单来说就是把我�
 	    let b = 20
 	    const c = 30
 	}
+
 	a // 10
 	b // Uncaught ReferenceError: b is not defined
 	c // c is not defined
 	let d = 40
 	const e = 50
 	d = 60
+
 	d // 60
 	e = 70 // VM231:1 Uncaught TypeError: Assignment to constant variable.
 
