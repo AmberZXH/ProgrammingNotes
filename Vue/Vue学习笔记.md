@@ -205,8 +205,8 @@ v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进�
 - .stop 阻止冒泡
 - .prevent 阻止默认事件
 - .capture 添加事件监听器时使用事件捕获模式
-- .self 只当事件在该元素本身（比如不是子元素）触发时触发回调
-- .once 事件之触发一次
+- .self 只当事件在该元素本身（比如不是子元素）触发时触发回调，只会阻止自身的冒泡行为，不会阻止其他的冒泡（如其父类的冒泡事件）
+- .once 事件只触发一次
 
 下例中的 **.enter** 的作用是限制触发的按键为 enter
 
@@ -382,11 +382,13 @@ item 和 index 可以结合其他指令一起使用。
 	</script>
 
 
-### v-model 指令
+### v-model 指令（双向数据绑定）
 
-v-model 指令的作用是便捷的设置和获取表单元素的值，**需要和表单元素一起使用**。
+v-model 指令的作用是便捷的设置和获取表单元素的值。绑定的数据和表单元素的值相关联，**数据的绑定是双向的**。
 
-绑定的数据和表单元素的值相关联，**数据的绑定是双向的**
+**v-model 只能和表单元素一起使用**。
+
+**只有 v-model 能实现双向数据绑定， v-bind，只能实现单向数据绑定（从 M 绑定到 V）**
 
 	<div id="app">
 	    <input type="text" v-model="message">
@@ -401,4 +403,61 @@ v-model 指令的作用是便捷的设置和获取表单元素的值，**需要�
 	           message:'this is a message..'
 	       }
 	   })
+	</script>
+
+## Vue 中使用样式
+
+### 使用 class 样式
+
+**1. 数组方式**
+
+	<h1 :class="['red','thin']">使用数组方式</h1>
+
+**2. 数组中使用三元表达式**
+
+	<h1 :class="['red','thin',isActive?'active':'']">数组中使用三元表达式</h1>
+
+**3.数组中嵌套对象**
+
+	<h1 :class="['red','thin',{'active':isActive}]">数组中嵌套对象</h1>
+
+**4.直接使用对象**
+
+	<h1 :class="['red','thin',{'active':isActive}]">直接使用对象</h1>
+
+### 使用内联样式
+
+**1. 直接在元素上通过 :style 形式，书写对象样式**
+
+	<h1 :style="{color:'red','font-size':'60px'}">通过 :style 使用内联样式</h1>
+
+**2. 将样式写到对象化，定义到 data 中，直接应用到 :style 中**
+
+	<div id="app">
+	    <h1 :style="styleObj">将样式对象化，直接引用到 :style 中</h1>
+	</div>
+	
+	<script>
+	    var app = new Vue({
+	        el:"#app",
+	        data:{
+	            styleObj: {color:'blue','font-size':'40px'}
+	        }
+	    })
+	</script>
+
+**3. 在 :style 中通过数组，引用多个 data 上的样式对象**
+
+	<div id="app">
+	    <h1 :style="[styleObj,styleObj2]">:style 中通过数组引用多个将样式对象</h1>
+	</div>
+	
+	<script>
+	    var app = new Vue({
+	        el:"#app",
+	        data:{
+	            styleObj: {color:'blue','font-size':'40px'},
+	            styleObj2: {background:'green','font-weight':'normal'},
+	        }
+	    })
 	</script>
