@@ -146,7 +146,7 @@ v-on 可使用 **@** 简写： v-on:click="执行的具体方法" => @click="执
 
 methods 和 data 属性是同级的，要执行的方法写在该属性中。
 
-在 methods 中的方法中可以通过 **this.xxx** 获取到 data 属性中xxx的值
+在 methods 中的方法中可以通过 **this.xxx** 获取到 data 属性中 xxx 的值
 	
 	<div id="app">
 	    <button value="v-on绑定事件" v-on:click="doSome">点我试试</button>
@@ -198,81 +198,7 @@ methods 和 data 属性是同级的，要执行的方法写在该属性中。
 	           }
 	       }
 	   })
-	</script>
-
-#### v-on 事件修饰符
-
-v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进行限制。常用事件修饰符如下：
-
-- **.stop** 阻止冒泡
-- **.prevent** 阻止默认事件
-- **.capture** 添加事件监听器时使用事件捕获模式
-- **.self** 只当事件在该元素本身（比如不是子元素）触发时触发回调，只会阻止自身的冒泡行为，不会阻止其他的冒泡（如：父类的冒泡事件）
-- **.once** 事件只触发一次
-
-示例：
-
-	<div id="app">
-	    <!-- 使用 .stop 阻止冒泡 -->
-	    <!-- <div class="innerDiv" @click="innerClick">
-	         <input type="button" value="点我试试" @click.stop="btnClick">
-	     </div>-->
-	
-	    <!-- 使用 .prevent 阻止默认事件-->
-	    <!--  <a href="http:\\www.baidu.com" @click.prevent="aClick">百度一下</a>-->
-	
-	    <!-- 使用 .capture 添加事件监听捕获从外层向里面触发 -->
-	    <!-- <div class="innerDiv" @click.capture="innerClick">
-	        <input type="button" value="点我试试" @click="btnClick">
-	    </div>-->
-	
-	    <!-- 使用 .self 在该元素本身触发,只会触发自身的冒泡行为，不会阻止其他的冒泡行为（如：父类的冒泡事件） -->
-	    <!-- <div class="innerDiv" @click.self="innerClick">
-	         <input type="button" value="点我试试" @click="btnClick">
-	     </div>-->
-	
-	    <!-- 使用 .once 事件只触发一次 -->
-	    <a href="http:\\www.baidu.com" @click.prevent.once="aClick">百度一下</a>
-	</div>
-	
-	
-	<script>
-	    var app = new Vue({
-	        el: "#app",
-	        methods: {
-	            btnClick() {
-	                console.log('点击了btn');
-	            },
-	            innerClick() {
-	                console.log('点击了innerDiv');
-	            },
-	            aClick() {
-	                console.log('点击了链接');
-	            }
-	        }
-	    })
-	</script>
-
-下例中的 **.enter** 的作用是限制触发的按键为 enter
-
-如：
-
-	<div id="app">
-	    <input type="text" @keyup.enter="xs('老铁：')">
-	</div>
-	
-	<script>
-	    // 创建 vue 实例
-	   var app = new Vue({
-	       el: "#app",
-	       methods:{         
-	           xs:function (p1) {
-	               alert(p1+'确定提交吗?');
-	           }
-	       }
-	   })
-	</script> 
-	
+	</script>	
 
 ### v-show 指令
 
@@ -318,7 +244,7 @@ v-show 指令的作用：根据表达式的真假切换元素的显示状态。
 
 ### v-if 指令
 
-v-if 指令和 v-show 指令的作用一样：根据表达式的真假值显示或隐藏元素，与 v-show 不同之处是：v-if 是直接操作元素，当表达式为假时会直接删除元素，而 v-show 是操作的元素的 display 属性，有较高的切换性能消耗。
+v-if 指令和 v-show 指令的作用一样：根据表达式的真假值显示或隐藏元素，与 v-show 不同之处是：v-if 是直接操作元素，**当表达式为假时会直接删除元素，而 v-show 是操作的元素的 display 属性**，有较高的切换性能消耗。
 
 如果 元素涉及到频繁的切换，最好不要用 v-if。
 
@@ -588,6 +514,79 @@ v-model 指令的作用是便捷的设置和获取表单元素的值。绑定的
 	   })
 	</script>
 
+## 事件修饰符
+
+v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进行限制。常用事件修饰符如下：
+
+- **.stop** 阻止冒泡
+- **.prevent** 阻止默认事件
+- **.capture** 添加事件监听器时使用事件捕获模式
+- **.self** 只当事件在该元素本身（比如不是子元素）触发时触发回调，只会阻止自身的冒泡行为，不会阻止其他的冒泡（如：父类的冒泡事件）
+- **.once** 事件只触发一次
+
+示例：
+
+	<div id="app">
+	    <!-- 使用 .stop 阻止冒泡 -->
+	    <!-- <div class="innerDiv" @click="innerClick">
+	         <input type="button" value="点我试试" @click.stop="btnClick">
+	     </div>-->
+	
+	    <!-- 使用 .prevent 阻止默认事件-->
+	    <!--  <a href="http:\\www.baidu.com" @click.prevent="aClick">百度一下</a>-->
+	
+	    <!-- 使用 .capture 添加事件监听捕获从外层向里面触发 -->
+	    <!-- <div class="innerDiv" @click.capture="innerClick">
+	        <input type="button" value="点我试试" @click="btnClick">
+	    </div>-->
+	
+	    <!-- 使用 .self 在该元素本身触发,只会阻止自身的冒泡行为，不会阻止其他的冒泡行为（如：父类的冒泡事件） -->
+	    <!-- <div class="innerDiv" @click.self="innerClick">
+	         <input type="button" value="点我试试" @click="btnClick">
+	     </div>-->
+	
+	    <!-- 使用 .once 事件只触发一次 -->
+	    <a href="http:\\www.baidu.com" @click.prevent.once="aClick">百度一下</a>
+	</div>
+	
+	
+	<script>
+	    var app = new Vue({
+	        el: "#app",
+	        methods: {
+	            btnClick() {
+	                console.log('点击了btn');
+	            },
+	            innerClick() {
+	                console.log('点击了innerDiv');
+	            },
+	            aClick() {
+	                console.log('点击了链接');
+	            }
+	        }
+	    })
+	</script>
+
+下例中的 **.enter** 的作用是限制触发的按键为 enter
+
+如：
+
+	<div id="app">
+	    <input type="text" @keyup.enter="xs('老铁：')">
+	</div>
+	
+	<script>
+	    // 创建 vue 实例
+	   var app = new Vue({
+	       el: "#app",
+	       methods:{         
+	           xs:function (p1) {
+	               alert(p1+'确定提交吗?');
+	           }
+	       }
+	   })
+	</script> 
+
 ## Vue 中使用样式
 
 ### 使用 class 样式
@@ -606,7 +605,7 @@ v-model 指令的作用是便捷的设置和获取表单元素的值。绑定的
 
 #### 直接使用对象
 
-	<h1 :class="['red','thin',{'active':isActive}]">直接使用对象</h1>
+	<h1 :class="{'red':true,'thin':true,active:true}">直接使用对象</h1>
 
 ### 使用内联样式
 
@@ -618,7 +617,7 @@ v-model 指令的作用是便捷的设置和获取表单元素的值。绑定的
 
 #### 方式二
 
-将样式写到对象化，定义到 data 中，直接应用到 :style 中
+将样式对象化，定义到 data 中，直接应用到 :style 中
 
 	<div id="app">
 	    <h1 :style="styleObj">将样式对象化，直接引用到 :style 中</h1>
@@ -650,3 +649,203 @@ v-model 指令的作用是便捷的设置和获取表单元素的值。绑定的
 	        }
 	    })
 	</script>
+
+## 过滤器
+
+Vue.js 允许自定义过滤器，**可用作一些常见的文本格式化**。过滤器可以用在两个地方：**Mustache插值表达式和 v-bind 表达式**。过滤器应该被添加在 JavaScript 调用的实例之前，由“管道”符指示。
+
+过滤器有两种: **全局过滤器、私有过滤**。
+
+### 全局过滤器
+
+定义语法： ```Vue.filter('过滤器名称', function(){})```
+
+过滤器中的 function 中：第一个参数，已经规定死了，永远都是过滤器管道符前面传递过来的数据。
+
+示例：
+
+	<!-- HTML结构 -->
+	<div id="app">
+	    <!-- 调用过滤器 -->
+	    {{ message | msgHandle }}
+	</div>
+	
+	<script>
+	    // 定义全局过滤器
+	    // 注意：要在 app 之前定义
+	    Vue.filter('msgHandle', function (data) {
+	        return data.toUpperCase();
+	    });
+	
+	    var app = new Vue({
+	        el: "#app",
+	        data: {
+	            message: 'this is a message'
+	        }
+	    });
+	</script>
+
+### 私有（局部）过滤器
+
+定义语法： 在实例中添加filters属性：filters:{过滤器名称1：处理函数，过滤器名称2：处理函数，...}。
+
+私有过滤器只在所定义的实例中有效。
+
+示例：
+
+	<!-- HTML结构 -->
+	<div id="app">
+	    <!-- 调用过滤器 -->
+	    {{ message | msgHandle }}
+	</div>
+	
+	<script>
+	    var app = new Vue({
+	        el: "#app",
+	        data: {
+	            message: 'this is a message'
+	        },
+		filters:{
+	            msgHandle:function (data,parrern='...') {
+	                return data+parrern;
+	            }
+	        }
+	    });
+	</script>
+
+**注意：**过滤器调用采用的是**就近原则**，如果私有过滤器和全局过滤器同名，则优先调用私有过滤器。
+
+## 按键修饰符
+
+在使用 v-on 进行事件绑定时，可以指定按键修饰符，如在点击 enter 键时触发事件，enter 也可使用 按键码代替：enter => 13，[全部键盘码参考]('https://www.cnblogs.com/yiven/p/7118056.html')
+
+	<input type="button" value="点我试试" @click.enter="doSome">
+	// 与上同效果
+	<input type="button" value="点我试试" @click.13="doSome">	
+
+### 自定义全局键盘修饰符
+
+Vue.js 支持自定义键盘修饰符，如定义键盘码值为 113 的 f2 键 ：
+
+	Vue.config.keyCodes.f2 = 113;
+	// 使用自定义键盘修饰符
+	<input type="button" value="点我试试" @keyup.f2="doSome">	
+
+## 自定义指令
+
+除了核心功能默认内置的指令 (v-model 和 v-show)，Vue 也允许注册自定义指令。
+
+### 自定义全局指令
+
+定义全局指令，语法： **Vue.directive(param1,param2)**
+
+param1： 指令的名称，**注意：在定义指令名称时，不需要加 v- 前缀，但在调用时必须加上 v- 前缀。**
+
+param2： 是一个对象，这个对象上，有一些指令相关的函数，这些函数可以在特定的阶段，执行相关的操作。
+
+示例：
+
+	<div id="app">
+	    <input type="text" v-focus>
+	</div>
+	
+	<script>
+	    // 注册全局指令
+	    Vue.directive('focus', {
+	        inserted:function (el) {
+	            // 聚焦元素
+	            el.focus();
+	        }
+	    });
+	    var vm = new Vue({
+	        el: "#app",
+	
+	    })
+	</script>
+
+### 自定义局部指令
+
+如果想注册局部指令，组件中也接受一个 directives 的选项，示例：
+
+	<div id="app">
+	    <input type="text" v-bdcolor>
+	</div>
+	
+	<script>
+	    var vm = new Vue({
+	        el: "#app",
+	        // 注册局部指令
+	        directives:{
+	            bdcolor:{
+	                bind: function (el) {
+	                    el.style.border='2px solid red';
+	                }
+	            }
+	        }
+	
+	    })
+	</script>
+
+### 钩子函数
+
+一个指令定义对象可以提供如下几个钩子函数 (均为可选)：
+
+- **bind：**只调用一次，指令第一次绑定到元素时调用。在这里可以进行一次性的初始化设置。
+
+- **inserted：**被绑定元素插入父节点时调用 (仅保证父节点存在，但不一定已被插入文档中)。
+
+- **update：**所在组件的 VNode 更新时调用，但是可能发生在其子 VNode 更新之前。指令的值可能发生了改变，也可能没有。但是你可以通过比较更新前后的值来忽略不必要的模板更新 (详细的钩子函数参数见下)。
+
+- **omponentUpdated：**指令所在组件的 VNode 及其子 VNode 全部更新后调用。
+
+- **unbind：**只调用一次，指令与元素解绑时调用。
+
+接下来我们来看一下钩子函数的参数 (即 el、binding、vnode 和 oldVnode)。
+
+### 钩子函数参数
+
+指令钩子函数会被传入以下参数：
+
+- **el：**指令所绑定的元素，可以用来直接操作 DOM 。
+- **binding：**一个对象，包含以下属性：
+	- <u>**name：**指令名，不包括 v- 前缀。</u>
+	- <u>**value：**指令的绑定值，例如：v-my-directive="1 + 1" 中，绑定值为 2，**（计算后的值）**</u>
+	- **oldValue：**指令绑定的前一个值，仅在 update 和 componentUpdated 钩子中可用。无论值是否改变都可用。
+	- <u>**expression：**字符串形式的指令表达式。例如 v-my-directive="1 + 1" 中，表达式为 "1 + 1"，**（原样输出）**</u>
+	- **arg：**传给指令的参数，可选。例如 v-my-directive:foo 中，参数为 "foo"。
+	- **modifiers：**一个包含修饰符的对象。例如：v-my-directive.foo.bar 中，修饰符对象为 { foo: true, bar: true }。
+- **vnode：**Vue 编译生成的虚拟节点。
+- **oldVnode：**上一个虚拟节点，仅在 update 和 componentUpdated 钩子中可用。
+
+> 除了 el 之外，其它参数都应该是只读的，切勿进行修改。如果需要在钩子之间共享数据，建议通过元素的 dataset 来进行。
+
+这是一个使用了这些属性的自定义钩子样例：
+
+	<div id="hook-arguments-example" v-demo:foo.a.b="message"></div>
+	Vue.directive('demo', {
+	  bind: function (el, binding, vnode) {
+	    var s = JSON.stringify
+	    el.innerHTML =
+	      'name: '       + s(binding.name) + '<br>' +
+	      'value: '      + s(binding.value) + '<br>' +
+	      'expression: ' + s(binding.expression) + '<br>' +
+	      'argument: '   + s(binding.arg) + '<br>' +
+	      'modifiers: '  + s(binding.modifiers) + '<br>' +
+	      'vnode keys: ' + Object.keys(vnode).join(', ')
+	  }
+	})
+	
+	new Vue({
+	  el: '#hook-arguments-example',
+	  data: {
+	    message: 'hello!'
+	  }
+	})
+
+	// 执行结果：
+	name: "demo"
+	value: "hello!"
+	expression: "message"
+	argument: "foo"
+	modifiers: {"a":true,"b":true}
+	vnode keys: tag, data, children, text, elm, ns, context, fnContext, fnOptions, fnScopeId, key, componentOptions, componentInstance, parent, raw, isStatic, isRootInsert, isComment, isCloned, isOnce, asyncFactory, asyncMeta, isAsyncPlaceholder
