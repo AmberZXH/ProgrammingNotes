@@ -20,7 +20,7 @@ Vue 的目标是通过尽可能简单的 API 实现响应的数据绑定和组�
 
 MVVM 是前端视图层的分层开发思想，主要把每个页面分成了 M、V、VM 三层，VM 是 MVVM中的思想核心，是 M 和 V 之间的调度者。MVVM 思想主要是为了让开发更加方便，因为 MVVM 提供了<u>数据的双向绑定</u>（**由 VM 提供**）。
 
-![MVVM示意图]('https://raw.githubusercontent.com/cayxc/ProgrammingNotes/master/Vue/img/vue-1.jpg')
+![MVVM示意图](https://raw.githubusercontent.com/cayxc/ProgrammingNotes/master/Vue/img/vue-1.jpg)
 	
 ## 安装
 
@@ -67,7 +67,7 @@ el 挂载点，Vue 实例要控制页面的区域，即 Vue 开始渲染的容�
 **需要注意的 2 点：**
 
 1. 可以使用其他择器（如：class选择器, 标签选择器， id选择器），但建议使用 id 选择器
-2. 可以设置其他的**双标签**，**不能挂载到 html 和 body 上**，建议使用 div
+2. 可以**设置其他的双标签**，**不能挂载到 html 和 body 上**，建议使用 div
 
 ### data 数据对象
 
@@ -246,7 +246,7 @@ v-show 指令的作用：根据表达式的真假切换元素的显示状态。
 
 v-if 指令和 v-show 指令的作用一样：根据表达式的真假值显示或隐藏元素，与 v-show 不同之处是：v-if 是直接操作元素，**当表达式为假时会直接删除元素，而 v-show 是操作的元素的 display 属性**，有较高的切换性能消耗。
 
-如果 元素涉及到频繁的切换，最好不要用 v-if。
+**如果元素涉及到频繁的切换，最好不要用 v-if。**
 
 	<div id="app">
 	    <p v-show="isShow">被控制元素1</p>
@@ -567,6 +567,9 @@ v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进�
 	    })
 	</script>
 
+## 按键修饰符
+
+
 下例中的 **.enter** 的作用是限制触发的按键为 enter
 
 如：
@@ -586,6 +589,20 @@ v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进�
 	       }
 	   })
 	</script> 
+
+在使用 v-on 进行事件绑定时，可以指定按键修饰符，如在点击 enter 键时触发事件，enter 也可使用 按键码代替：enter => 13，[全部键盘码参考]('https://www.cnblogs.com/yiven/p/7118056.html')
+
+	<input type="button" value="点我试试" @click.enter="doSome">
+	// 与上同效果
+	<input type="button" value="点我试试" @click.13="doSome">	
+
+### 自定义全局键盘修饰符
+
+Vue.js 支持自定义键盘修饰符，如定义键盘码值为 113 的 f2 键 ：
+
+	Vue.config.keyCodes.f2 = 113;
+	// 使用自定义键盘修饰符
+	<input type="button" value="点我试试" @keyup.f2="doSome">	
 
 ## Vue 中使用样式
 
@@ -611,13 +628,13 @@ v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进�
 
 #### 方式一
 
-直接在元素上通过 :style 形式，书写对象样式
+直接在元素上通过 **:style** 形式，书写对象样式
 
 	<h1 :style="{color:'red','font-size':'60px'}">通过 :style 使用内联样式</h1>
 
 #### 方式二
 
-将样式对象化，定义到 data 中，直接应用到 :style 中
+将样式对象化，定义到 data 中，直接应用到 **:style** 中
 
 	<div id="app">
 	    <h1 :style="styleObj">将样式对象化，直接引用到 :style 中</h1>
@@ -652,13 +669,13 @@ v-on 绑定事件时，在事件后面跟上 **.修饰符** 可以对事件进�
 
 ## 过滤器
 
-Vue.js 允许自定义过滤器，**可用作一些常见的文本格式化**。过滤器可以用在两个地方：**Mustache插值表达式和 v-bind 表达式**。过滤器应该被添加在 JavaScript 调用的实例之前，由“管道”符指示。
+Vue.js 允许自定义过滤器，**可用作一些常见的文本格式化**。过滤器可以用在两个地方：**Mustache插值表达式**和 **v-bind 表达式**。过滤器应该被添加在 JavaScript 调用的实例之前，由“管道”符指示。
 
 过滤器有两种: **全局过滤器、私有过滤**。
 
 ### 全局过滤器
 
-定义语法： ```Vue.filter('过滤器名称', function(){})```
+定义语法： **Vue.filter('过滤器名称', function(){})**
 
 过滤器中的 function 中：第一个参数，已经规定死了，永远都是过滤器管道符前面传递过来的数据。
 
@@ -687,7 +704,7 @@ Vue.js 允许自定义过滤器，**可用作一些常见的文本格式化**。
 
 ### 私有（局部）过滤器
 
-定义语法： 在实例中添加filters属性：filters:{过滤器名称1：处理函数，过滤器名称2：处理函数，...}。
+定义语法： 在实例中添加 **filters属性：filters:{过滤器名称1：处理函数，过滤器名称2：处理函数，...}**。
 
 私有过滤器只在所定义的实例中有效。
 
@@ -713,23 +730,7 @@ Vue.js 允许自定义过滤器，**可用作一些常见的文本格式化**。
 	    });
 	</script>
 
-**注意：**过滤器调用采用的是**就近原则**，如果私有过滤器和全局过滤器同名，则优先调用私有过滤器。
-
-## 按键修饰符
-
-在使用 v-on 进行事件绑定时，可以指定按键修饰符，如在点击 enter 键时触发事件，enter 也可使用 按键码代替：enter => 13，[全部键盘码参考]('https://www.cnblogs.com/yiven/p/7118056.html')
-
-	<input type="button" value="点我试试" @click.enter="doSome">
-	// 与上同效果
-	<input type="button" value="点我试试" @click.13="doSome">	
-
-### 自定义全局键盘修饰符
-
-Vue.js 支持自定义键盘修饰符，如定义键盘码值为 113 的 f2 键 ：
-
-	Vue.config.keyCodes.f2 = 113;
-	// 使用自定义键盘修饰符
-	<input type="button" value="点我试试" @keyup.f2="doSome">	
+**注意：**过滤器调用采用的是**就近原则**，如果私有过滤器和全局过滤器同名，则**优先调用私有过滤器**。
 
 ## 自定义指令
 
@@ -796,7 +797,7 @@ param2： 是一个对象，这个对象上，有一些指令相关的函数，�
 
 - **update：**所在组件的 VNode 更新时调用，但是可能发生在其子 VNode 更新之前。指令的值可能发生了改变，也可能没有。但是你可以通过比较更新前后的值来忽略不必要的模板更新 (详细的钩子函数参数见下)。
 
-- **omponentUpdated：**指令所在组件的 VNode 及其子 VNode 全部更新后调用。
+- **componentUpdated：**指令所在组件的 VNode 及其子 VNode 全部更新后调用。
 
 - **unbind：**只调用一次，指令与元素解绑时调用。
 
@@ -852,7 +853,7 @@ param2： 是一个对象，这个对象上，有一些指令相关的函数，�
 
 ### 函数简写
 
-在很多时候，你可能想在 bind 和 update 时触发相同行为，而不关心其它的钩子。可以这样写:
+在很多时候，你可能想在 **bind** 和 **update** 时触发相同行为，而不关心其它的钩子。可以这样写:
 
 	Vue.directive('color-swatch', function (el, binding) {
 	  el.style.backgroundColor = binding.value
@@ -873,11 +874,11 @@ param2： 是一个对象，这个对象上，有一些指令相关的函数，�
 Vue 生命周期：Vue 实例从创建、运行到销毁期间，总是伴随着各种各样的事件，这些事件统称为生命周期。
 
 - **生命周期钩子**：就是生命周期事件的别名。
-- 生命周期钩子 = 生命周期函数 = 生命周期事件
+- **生命周期钩子 = 生命周期函数 = 生命周期事件**
 - 主要的生命周期函数分为 3 大类：
 	- **1. 创建期间的生命周期函数：**
 		- **beforeCreate：**实例刚在内存中创建出来，此时，还没没有初始化好 data 和 methods 属性
-		- **created：** 实例已经在内存中创建OK,此时，data 和 methods 已经创建OK，还未开始编译模板 
+		- **created：** 实例已经在内存中创建好了，此时，data 和 methods 已经创建好了，还未开始编译模板 
 		- **beforeMount：**此时模板已编译完成，但还未挂载到页面中
 		- **mounted：** 此时已将编译好的模板挂载到了页面指定的容器中显示
 	- **2. 运行期间的生命周期函数：**
@@ -887,4 +888,4 @@ Vue 生命周期：Vue 实例从创建、运行到销毁期间，总是伴随着
 		- **beforeDestory：**实例销毁之前调用。在这一步，实例仍然可以调用
 		- **destoryed：** Vue实例被销毁后调用。调用后，Vue 实例的所有东西都会被移除和解除绑定（如：事件监听器，指令等），所有的子实例也会被销毁。
 
-![Vue生命周期]('https://raw.githubusercontent.com/cayxc/ProgrammingNotes/master/Vue/img/lifecycle.png')
+![Vue生命周期](https://raw.githubusercontent.com/cayxc/ProgrammingNotes/master/Vue/img/lifecycle.png)
